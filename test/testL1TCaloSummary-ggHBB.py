@@ -53,10 +53,11 @@ process.load("L1Trigger.Run3Ntuplizer.l1BoostedJetStudies_cfi")
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(100) )
 process.source = cms.Source("PoolSource",
                             fileNames = cms.untracked.vstring(
-				'file:/eos/user/p/pdas/L1Boosted/ggHbb/MiniAOD/RunIIAutumn18MiniAOD_21Dec_0_5300.root'
+'root://cms-xrd-global.cern.ch://store/user/joeherna/Boosted_ggHbb_M-125_Pt-250_GENSIM/Boosted_ggHbb_M-125_Pt-250_MINIAOD/231115_211847/0000/RunIIAutumn18MiniAOD_test2_november13_1368980_1374280_1.root'
 ),
                             secondaryFileNames = cms.untracked.vstring(
-				'file:/eos/user/p/pdas/L1Boosted/ggHbb/DR/RunIIAutumn18DRPremix_step1_21Dec_0_5300.root'
+
+'root://cms-xrd-global.cern.ch://store/user/joeherna/Boosted_ggHbb_M-125_Pt-250_GENSIM/Boosted_ggHbb_M-125_Pt-250_DIGIRAW/231114_123814/0000/RunIIAutumn18DRPremix_step1_test2_november13_1368980_1374280_1.root'
                             )
 )
 

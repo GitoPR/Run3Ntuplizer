@@ -811,14 +811,14 @@ void BoostedJetStudies::createBranches(TTree *tree){
     tree->Branch("nSubJets",      &nSubJets);
     tree->Branch("subJetHFlav",   &subJetHFlav);
     tree->Branch("nBHadrons",     &nBHadrons);
-    tree->Branch("l1Jets", "vector<TLorentzVector>", &l1Jets, 32000, 0);
+    tree->Branch("bp_jets", "vector<TLorentzVector>", &l1Jets, 32000, 0);
     tree->Branch("seed180", "vector<TLorentzVector>", &seed180, 32000, 0);
     tree->Branch("tauseed", "vector<TLorentzVector>", &tauseed, 32000, 0);
     tree->Branch("ak8Jets", "vector<TLorentzVector>", &ak8Jets, 32000, 0);
     tree->Branch("subJets", "vector<TLorentzVector>", &subJets, 32000, 0);
     tree->Branch("allRegions", "vector<TLorentzVector>", &allRegions, 32000, 0);
     tree->Branch("allL1Jets", "vector<TLorentzVector>", &allL1Jets, 32000, 0);
-    tree->Branch("allL1Signals",     &allL1Signals);
+    tree->Branch("signals",     &allL1Signals);
     tree->Branch("allL1DR_withReco", &allL1DR_withReco);
     tree->Branch("regionEta",        &regionEta);
     tree->Branch("regionPhi",        &regionPhi);
