@@ -94,6 +94,8 @@ private:
   edm::EDGetTokenT<BXVector<l1t::Tau>> stage2TauToken_;
   edm::EDGetTokenT<l1t::EtSumBxCollection> stage2EtSumToken_;
   edm::EDGetTokenT<vector<l1extra::L1JetParticle>> l1BoostedToken_;
+  //add calo region token 
+  edm::EDGetTokenT<std::vector <L1CaloRegion> > regionsToken_;
 
   TH1F* nEvents;
 
@@ -109,6 +111,9 @@ private:
   int recoNthJet_1;
   int seedNthJet_1;
 
+  // add array of cregions
+  std::vector<uint16_t> cregions;
+  
   double recoPt_;
   std::vector<int> nSubJets, nBHadrons, HFlav;
   std::vector<std::vector<int>> subJetHFlav;
@@ -139,7 +144,9 @@ BoostedJetStudies::BoostedJetStudies(const edm::ParameterSet& iConfig) :
   stage2JetToken_(consumes<BXVector<l1t::Jet>>( edm::InputTag("caloStage2Digis","Jet","RECO"))),
   stage2TauToken_(consumes<BXVector<l1t::Tau>>( edm::InputTag("caloStage2Digis","Tau","RECO"))),
   stage2EtSumToken_(consumes<l1t::EtSumBxCollection>( edm::InputTag("caloStage2Digis","EtSum","RECO"))),
-  l1BoostedToken_(consumes<vector<l1extra::L1JetParticle>>( edm::InputTag("simCaloStage2Layer1Summary","Boosted","")))
+  l1BoostedToken_(consumes<vector<l1extra::L1JetParticle>>( edm::InputTag("simCaloStage2Layer1Summary","Boosted",""))),
+  regionsToken_(consumes<std::vector <L1CaloRegion> >(iConfig.getUntrackedParameter<edm::InputTag>("UCTRegion")))
+
 {
   // Initialize the Tree
 
@@ -178,6 +185,9 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
   std::vector<pat::Jet> goodJetsAK8;
   std::vector<l1t::Jet> seeds;
 
+  uint16_t regionColl[252];
+  uint16_t regionColl_input[14][18];
+  
   l1Jets->clear();
   seed180->clear();
   tauseed->clear();
@@ -189,6 +199,25 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
   tau1.clear();
   tau2.clear();
   tau3.clear();
+  cregions.clear();
+
+  
+for (const auto& region : evt.get(regionsToken_)){
+
+  uint32_t ieta = region.id().ieta() - 4; // Subtract off the offset for HF
+  uint32_t iphi = region.id().iphi();
+  double  et = region.et();
+
+  regionColl_input[ieta][iphi] = et ;  
+ }
+
+for (unsigned int phi = 0; phi < 18; phi++){
+  for (int eta = 0; eta < 14; eta++){
+      cregions.push_back(regionColl_input[eta][phi]);
+  }
+ }
+
+ 
 
   // Accessing existing L1 seed stored in MINIAOD
   edm::Handle<BXVector<l1t::Jet>> stage2Jets;
@@ -357,6 +386,8 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
   efficiencyTree->Fill();
 }
 
+
+
 void BoostedJetStudies::zeroOutAllVariables(){
   genPt_1=-99; genEta_1=-99; genPhi_1=-99; genM_1=-99; genDR=99; genId=-99; genMother=-99;
   seedPt_1=-99; seedEta_1=-99; seedPhi_1=-99; seedNthJet_1=-99;
@@ -399,6 +430,8 @@ void BoostedJetStudies::createBranches(TTree *tree){
     tree->Branch("tauseed", "vector<TLorentzVector>", &tauseed, 32000, 0);
     tree->Branch("ak8Jets", "vector<TLorentzVector>", &ak8Jets, 32000, 0);
     tree->Branch("subJets", "vector<TLorentzVector>", &subJets, 32000, 0);
+    tree->Branch("cregions",     &cregions);
+
   }
 
 

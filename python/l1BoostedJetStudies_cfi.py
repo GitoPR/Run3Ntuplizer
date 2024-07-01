@@ -5,4 +5,5 @@ l1NtupleProducer = cms.EDAnalyzer("BoostedJetStudies",
                                   recoJets                = cms.InputTag("slimmedCaloJets"),
                                   recoJetsAK8             = cms.InputTag("slimmedJetsAK8"),
                                   genParticles            = cms.InputTag("genParticles", "", "HLT"),
+                                  UCTRegion = cms.untracked.InputTag("simCaloStage2Layer1Digis")                                  
 )
