@@ -372,18 +372,31 @@ for (unsigned int phi = 0; phi < 18; phi++){
   if(evt.getByToken(genSrc_, genParticles)){//Begin Getting Gen Particles
     for (reco::GenParticleCollection::const_iterator genparticle = genParticles->begin(); genparticle != genParticles->end(); genparticle++){
       double DR = reco::deltaR(recoEta_1, recoPhi_1, genparticle->eta(), genparticle->phi());
-      if (DR < genDR && genparticle->status() > 21 && genparticle->status() < 41){
-        genDR = DR;
-        genId = genparticle->pdgId();
-        genMother = genparticle->motherRef(0)->pdgId();
-        genPt_1 = genparticle->pt();
-        genEta_1 = genparticle->eta();
-        genPhi_1 = genparticle->phi();
-        genM_1 = genparticle->mass();
+      if ( genparticle->pdgId() == 25 && genparticle->status() > 21 && genparticle->status() < 41 && genparticle->eta()){
+
+      cout<< "check1"  << std::endl;
+      genDR = DR;
+      genId = genparticle->pdgId();
+      genMother = genparticle->motherRef(0)->pdgId();
+      genPt_1 = genparticle->pt();
+      genEta_1 = genparticle->eta();
+      genPhi_1 = genparticle->phi();
+      genM_1 = genparticle->mass();
+      /*    cout<< "genEta: " << genEta_1 << std::endl;
+      cout<<"genId :" << genId <<std::endl;
+      cout<< "genEta: " << genEta_1 << std::endl;
+      cout << "\n" << std::endl; */ 
+      
       }
+
     }
+
   }
-  efficiencyTree->Fill();
+  if (abs(genEta_1) < 2.5) {
+     efficiencyTree->Fill();
+  }
+  //  cout<< "check3"  << std::endl;
+
 }
 
 
