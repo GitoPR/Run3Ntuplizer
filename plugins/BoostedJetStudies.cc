@@ -372,7 +372,7 @@ for (unsigned int phi = 0; phi < 18; phi++){
   if(evt.getByToken(genSrc_, genParticles)){//Begin Getting Gen Particles
     for (reco::GenParticleCollection::const_iterator genparticle = genParticles->begin(); genparticle != genParticles->end(); genparticle++){
       double DR = reco::deltaR(recoEta_1, recoPhi_1, genparticle->eta(), genparticle->phi());
-      if ( genparticle->pdgId() == 25 && genparticle->status() > 21 && genparticle->status() < 41 && genparticle->eta()){
+      if ( genparticle->pdgId() == 25 && genparticle->status() > 21 && genparticle->status() < 41){
 
       cout<< "check1"  << std::endl;
       genDR = DR;
