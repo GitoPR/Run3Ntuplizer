@@ -15,7 +15,6 @@
 #include "FWCore/Framework/interface/MakerMacros.h"
 
 #include "FWCore/ParameterSet/interface/ParameterSet.h"
-
 #include "DataFormats/EcalDigi/interface/EcalDigiCollections.h"
 #include "DataFormats/HcalDigi/interface/HcalDigiCollections.h"
 
@@ -83,7 +82,7 @@ private:
   virtual void beginJob() override;
   virtual void endJob() override;
 
-//  virtual void beginRun(edm::Run const&, edm::EventSetup const&) override;
+  //  virtual void beginRun(edm::Run const&, edm::EventSetup const&) override;
 
   // ----------member data ---------------------------
   edm::EDGetTokenT<vector<reco::CaloJet> > jetSrc_;
@@ -101,8 +100,8 @@ private:
 
   int run, lumi, event;
 
-  double genPt_1, genEta_1, genPhi_1, genM_1, genDR;
-  int genId, genMother;
+  double genPt_1, genEta_1, genPhi_1, genM_1, genDR, dau_eta, dauET, dau_phi;
+  int genId, genMother, dauID;
   double recoPt_1, recoEta_1, recoPhi_1;
   double l1Pt_1, l1Eta_1, l1Phi_1;
   double seedPt_1, seedEta_1, seedPhi_1;
@@ -113,6 +112,14 @@ private:
 
   // add array of cregions
   std::vector<uint16_t> cregions;
+
+  // Daugther particles info
+   std::vector<int> dgt_id;
+  std::vector<double>dgt_et;
+  std::vector<double>dgt_eta;
+  std::vector<double>dgt_phi;
+
+
   
   double recoPt_;
   std::vector<int> nSubJets, nBHadrons, HFlav;
@@ -175,7 +182,7 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
 {
   using namespace edm;
 
-  nEvents->Fill(1);
+   nEvents->Fill(1);
   run = evt.id().run();
   lumi = evt.id().luminosityBlock();
   event = evt.id().event();
@@ -185,6 +192,7 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
   std::vector<pat::Jet> goodJetsAK8;
   std::vector<l1t::Jet> seeds;
 
+  
   uint16_t regionColl[252];
   uint16_t regionColl_input[14][18];
   
@@ -200,22 +208,26 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
   tau2.clear();
   tau3.clear();
   cregions.clear();
+  dgt_id.clear();
+  dgt_eta.clear();
+  dgt_phi.clear();
+  dgt_et.clear(); 
 
   
-for (const auto& region : evt.get(regionsToken_)){
+  for (const auto& region : evt.get(regionsToken_)){
 
-  uint32_t ieta = region.id().ieta() - 4; // Subtract off the offset for HF
-  uint32_t iphi = region.id().iphi();
-  double  et = region.et();
+    uint32_t ieta = region.id().ieta() - 4; // Subtract off the offset for HF
+    uint32_t iphi = region.id().iphi();
+    double  et = region.et();
 
-  regionColl_input[ieta][iphi] = et ;  
- }
-
-for (unsigned int phi = 0; phi < 18; phi++){
-  for (int eta = 0; eta < 14; eta++){
-      cregions.push_back(regionColl_input[eta][phi]);
+    regionColl_input[ieta][iphi] = et ;  
   }
- }
+
+  for (unsigned int phi = 0; phi < 18; phi++){
+    for (int eta = 0; eta < 14; eta++){
+      cregions.push_back(regionColl_input[eta][phi]);
+    }
+  }
 
  
 
@@ -374,42 +386,77 @@ for (unsigned int phi = 0; phi < 18; phi++){
       double DR = reco::deltaR(recoEta_1, recoPhi_1, genparticle->eta(), genparticle->phi());
       if ( genparticle->pdgId() == 25 && genparticle->status() > 21 && genparticle->status() < 41){
 
-      cout<< "check1"  << std::endl;
-      genDR = DR;
-      genId = genparticle->pdgId();
-      genMother = genparticle->motherRef(0)->pdgId();
-      genPt_1 = genparticle->pt();
-      genEta_1 = genparticle->eta();
-      genPhi_1 = genparticle->phi();
-      genM_1 = genparticle->mass();
-      /*    cout<< "genEta: " << genEta_1 << std::endl;
-      cout<<"genId :" << genId <<std::endl;
-      cout<< "genEta: " << genEta_1 << std::endl;
-      cout << "\n" << std::endl; */ 
+	//	cout<< "check1"  << std::endl;
+	genDR = DR;
+	genId = genparticle->pdgId();
+	genPt_1 = genparticle->pt();
+	genEta_1 = genparticle->eta();
+	genPhi_1 = genparticle->phi();
+	genM_1 = genparticle->mass();
+	/*    cout<< "genEta: " << genEta_1 << std::endl;
+	      cout<<"genId :" << genId <<std::endl;
+	      cout<< "genEta: " << genEta_1 << std::endl;
+	      cout << "\n" << std::endl; */
+
+	//storing information about daughter particles:
+	//	int n = genparticle -> numberOfDaughters();
+	//cout<< "number of daughter particles: " << n << std::endl;
+	//	for(int j = 0; j < n; ++ j) {
+	//	  const reco::Candidate * d = genparticle->daughter(j);
+	
+	//	     dauId = d->pdgId();
+	//	  cout<< "daughter Id: " << dauId << std::endl;
+	//	   dauEta = d -> eta();
+	//	   dauET = d -> pt();
+	//	   dauPhi= d -> phi();
+
+	//	  dgt_id.push_back(dauId);  // daughter pdgid 
+	//	  dgt_eta.push_back(dauEta);  // eta
+	//	  dgt_phi.push_back(dauPhi); // phi
+	//	  dgt_et.push_back(dauET); //phi } 
+      
+ 	    }
+
+      const reco::Candidate *m =      genparticle -> mother();
+      cout<< "check2"  << std::endl;
+      if (m != nullptr && m->pdgId() == 25){
+	if(genparticle -> pdgId() != 25 && m -> pdgId()  == 25) {
+
+	  cout<< "check3"  << std::endl;
+	  dauID  = genparticle -> pdgId();
+	  dauET = genparticle -> pt();
+	  dau_phi = genparticle -> phi();
+	  dau_eta = genparticle -> eta();
+	  
+	  dgt_id.push_back(dauID);  // daughter pdgid                                                                                                                                                                               
+	  dgt_eta.push_back(dau_eta);  // eta
+	  dgt_phi.push_back(dau_phi); // phi                                                                                                                                                                                 
+	  dgt_et.push_back(dauET); //phi                                                                                                                                                                                                         
+
+
       
       }
+       }
+      //      cout<< "check4"  << std::endl;
 
     }
-
   }
   if (abs(genEta_1) < 2.5) {
-     efficiencyTree->Fill();
+    efficiencyTree->Fill();
   }
-  //  cout<< "check3"  << std::endl;
 
+  //  cout<< "check5"  << std::endl;
 }
 
+  void BoostedJetStudies::zeroOutAllVariables(){
+    genPt_1=-99; genEta_1=-99; genPhi_1=-99; genM_1=-99; genDR=99; genId=-99; genMother=-99;
+    seedPt_1=-99; seedEta_1=-99; seedPhi_1=-99; seedNthJet_1=-99;
+    recoPt_1=-99; recoEta_1=-99; recoPhi_1=-99; recoNthJet_1=-99;
+    l1Pt_1=-99; l1Eta_1=-99; l1Phi_1=-99; l1NthJet_1=-99;
+    recoPt_=-99; dauID = -99;  dauET = -99; dau_phi =-99; dau_eta = -99; 
+  }
 
-
-void BoostedJetStudies::zeroOutAllVariables(){
-  genPt_1=-99; genEta_1=-99; genPhi_1=-99; genM_1=-99; genDR=99; genId=-99; genMother=-99;
-  seedPt_1=-99; seedEta_1=-99; seedPhi_1=-99; seedNthJet_1=-99;
-  recoPt_1=-99; recoEta_1=-99; recoPhi_1=-99; recoNthJet_1=-99;
-  l1Pt_1=-99; l1Eta_1=-99; l1Phi_1=-99; l1NthJet_1=-99;
-  recoPt_=-99;
-}
-
-void BoostedJetStudies::createBranches(TTree *tree){
+  void BoostedJetStudies::createBranches(TTree *tree){
     tree->Branch("run",     &run,     "run/I");
     tree->Branch("lumi",    &lumi,    "lumi/I");
     tree->Branch("event",   &event,   "event/I");
@@ -444,60 +491,65 @@ void BoostedJetStudies::createBranches(TTree *tree){
     tree->Branch("ak8Jets", "vector<TLorentzVector>", &ak8Jets, 32000, 0);
     tree->Branch("subJets", "vector<TLorentzVector>", &subJets, 32000, 0);
     tree->Branch("cregions",     &cregions);
-
+    tree->Branch("dgt_id",     &dgt_id);
+    tree->Branch("dgt_et" , &dgt_et);
+    tree->Branch("dgt_eta" , &dgt_eta);
+    tree->Branch("dgt_phi" , &dgt_phi);
+    
   }
 
 
-// ------------ method called once each job just before starting event loop  ------------
-void 
-BoostedJetStudies::beginJob()
-{
-}
-
-// ------------ method called once each job just after ending the event loop  ------------
-void 
-BoostedJetStudies::endJob() {
-}
-
-// ------------ method called when starting to processes a run  ------------
-
-//void
-//BoostedJetStudies::beginRun(edm::Run const& iRun, edm::EventSetup const& iSetup) {
-//}
- 
-// ------------ method called when ending the processing of a run  ------------
-/*
-  void
-  BoostedJetStudies::endRun(edm::Run const&, edm::EventSetup const&)
+  // ------------ method called once each job just before starting event loop  ------------
+  void 
+    BoostedJetStudies::beginJob()
   {
   }
-*/
- 
-// ------------ method called when starting to processes a luminosity block  ------------
-/*
-  void
-  BoostedJetStudies::beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&)
-  {
-  }
-*/
- 
-// ------------ method called when ending the processing of a luminosity block  ------------
-/*
-  void
-  BoostedJetStudies::endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&)
-  {
-  }
-*/
- 
-// ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
-void
-BoostedJetStudies::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
-  //The following says we do not know what parameters are allowed so do no validation
-  // Please change this to state exactly what you do use, even if it is no parameters
-  edm::ParameterSetDescription desc;
-  desc.setUnknown();
-  descriptions.addDefault(desc);
-}
 
-//define this as a plug-in
-DEFINE_FWK_MODULE(BoostedJetStudies);
+  // ------------ method called once each job just after ending the event loop  ------------
+  void 
+    BoostedJetStudies::endJob() {
+  }
+
+  // ------------ method called when starting to processes a run  ------------
+
+  //void
+  //BoostedJetStudies::beginRun(edm::Run const& iRun, edm::EventSetup const& iSetup) {
+  //}
+ 
+  // ------------ method called when ending the processing of a run  ------------
+  /*
+    void
+    BoostedJetStudies::endRun(edm::Run const&, edm::EventSetup const&)
+    {
+    }
+  */
+ 
+  // ------------ method called when starting to processes a luminosity block  ------------
+  /*
+    void
+    BoostedJetStudies::beginLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&)
+    {
+    }
+  */
+ 
+  // ------------ method called when ending the processing of a luminosity block  ------------
+  /*
+    void
+    BoostedJetStudies::endLuminosityBlock(edm::LuminosityBlock const&, edm::EventSetup const&)
+    {
+    }
+  */
+ 
+  // ------------ method fills 'descriptions' with the allowed parameters for the module  ------------
+  void
+    BoostedJetStudies::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
+    //The following says we do not know what parameters are allowed so do no validation
+    // Please change this to state exactly what you do use, even if it is no parameters
+    edm::ParameterSetDescription desc;
+    desc.setUnknown();
+    descriptions.addDefault(desc);
+  }
+
+  //define this as a plug-in
+  DEFINE_FWK_MODULE(BoostedJetStudies);
+ 
