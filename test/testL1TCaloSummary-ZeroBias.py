@@ -37,19 +37,13 @@ process = L1TReEmulFromRAW(process)
 
 process.load("L1Trigger.Run3Ntuplizer.l1BoostedJetStudies_cfi")
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(1) )
 process.source = cms.Source("PoolSource",
                             fileNames = cms.untracked.vstring(
-                                'root://cms-xrd-global.cern.ch//store/data/Run2023C/ZeroBias/MINIAOD/PromptReco-v1/000/367/229/00000/9dce1b71-bb1a-43e7-9855-b7f754e26c0b.root'
+                                'root://cms-xrd-global.cern.ch://store/data/Run2024F/ZeroBias/MINIAOD/PromptReco-v1/000/382/725/00000/25e880d8-5f24-45cf-8cf5-2dff21a81c88.root'
                             ),
                             secondaryFileNames = cms.untracked.vstring(
-                                'root://cms-xrd-global.cern.ch://store/data/Run2023C/ZeroBias/RAW/v1/000/367/229/00000/153e5368-5613-4c28-abb4-9d2ce62f7100.root',
-                                'root://cms-xrd-global.cern.ch://store/data/Run2023C/ZeroBias/RAW/v1/000/367/229/00000/271c6501-3d4b-4ee3-b9bc-b61bfe92eb3b.root',
-                                'root://cms-xrd-global.cern.ch://store/data/Run2023C/ZeroBias/RAW/v1/000/367/229/00000/36c68528-7e81-413a-91a4-c6328ce86b1b.root',
-                                'root://cms-xrd-global.cern.ch://store/data/Run2023C/ZeroBias/RAW/v1/000/367/229/00000/bba5dd27-5cf3-4bfa-9a68-781b821c3ff7.root',
-                                'root://cms-xrd-global.cern.ch://store/data/Run2023C/ZeroBias/RAW/v1/000/367/229/00000/d5754704-c739-4511-a6a2-3ea707f69771.root',
-                                'root://cms-xrd-global.cern.ch://store/data/Run2023C/ZeroBias/RAW/v1/000/367/229/00000/e3e15114-bf4b-4c96-89f8-c9f8fa329781.root',
-                                'root://cms-xrd-global.cern.ch://store/data/Run2023C/ZeroBias/RAW/v1/000/367/229/00000/f852ae46-5926-4967-ad65-d13fd523c3ef.root',
+                                'root://cms-xrd-global.cern.ch://store/data/Run2024F/ZeroBias/RAW/v1/000/382/725/00000/57f090b4-b045-40c1-85d4-c9bfb4049a09.root'
                             )
 )
 

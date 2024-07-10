@@ -87,7 +87,7 @@ private:
   // ----------member data ---------------------------
   edm::EDGetTokenT<vector<reco::CaloJet> > jetSrc_;
   edm::EDGetTokenT<vector<pat::Jet> > jetSrcAK8_;
-  edm::EDGetTokenT<reco::GenParticleCollection> genSrc_;
+  //  edm::EDGetTokenT<reco::GenParticleCollection> genSrc_;
 
   edm::EDGetTokenT<BXVector<l1t::Jet>> stage2JetToken_;
   edm::EDGetTokenT<BXVector<l1t::Tau>> stage2TauToken_;
@@ -147,7 +147,7 @@ private:
 BoostedJetStudies::BoostedJetStudies(const edm::ParameterSet& iConfig) :
   jetSrc_(    consumes<vector<reco::CaloJet> >(iConfig.getParameter<edm::InputTag>("recoJets"))),
   jetSrcAK8_( consumes<vector<pat::Jet> >(iConfig.getParameter<edm::InputTag>("recoJetsAK8"))),
-  genSrc_( consumes<reco::GenParticleCollection> (iConfig.getParameter<edm::InputTag>( "genParticles"))),
+  //  genSrc_( consumes<reco::GenParticleCollection> (iConfig.getParameter<edm::InputTag>( "genParticles"))),
   stage2JetToken_(consumes<BXVector<l1t::Jet>>( edm::InputTag("caloStage2Digis","Jet","RECO"))),
   stage2TauToken_(consumes<BXVector<l1t::Tau>>( edm::InputTag("caloStage2Digis","Tau","RECO"))),
   stage2EtSumToken_(consumes<l1t::EtSumBxCollection>( edm::InputTag("caloStage2Digis","EtSum","RECO"))),
@@ -380,7 +380,7 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
 
   }
 
-  edm::Handle<reco::GenParticleCollection> genParticles;
+  /*  edm::Handle<reco::GenParticleCollection> genParticles;
   if(evt.getByToken(genSrc_, genParticles)){//Begin Getting Gen Particles
     for (reco::GenParticleCollection::const_iterator genparticle = genParticles->begin(); genparticle != genParticles->end(); genparticle++){
       double DR = reco::deltaR(recoEta_1, recoPhi_1, genparticle->eta(), genparticle->phi());
@@ -393,10 +393,10 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
 	genEta_1 = genparticle->eta();
 	genPhi_1 = genparticle->phi();
 	genM_1 = genparticle->mass();
-	/*    cout<< "genEta: " << genEta_1 << std::endl;
+	   cout<< "genEta: " << genEta_1 << std::endl;
 	      cout<<"genId :" << genId <<std::endl;
 	      cout<< "genEta: " << genEta_1 << std::endl;
-	      cout << "\n" << std::endl; */
+	      cout << "\n" << std::endl; 
 
 	//storing information about daughter particles:
 	//	int n = genparticle -> numberOfDaughters();
@@ -444,7 +444,7 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
   if (abs(genEta_1) < 2.5) {
     efficiencyTree->Fill();
   }
-
+*/
   //  cout<< "check5"  << std::endl;
 }
 
