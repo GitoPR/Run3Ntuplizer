@@ -445,6 +445,7 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
     efficiencyTree->Fill();
   }
 */
+  efficiencyTree->Fill();
   //  cout<< "check5"  << std::endl;
 }
 
