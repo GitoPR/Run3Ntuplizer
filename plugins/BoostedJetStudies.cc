@@ -69,6 +69,120 @@ bool compareByPt (l1extra::L1JetParticle i, l1extra::L1JetParticle j) { return(i
 // class declaration
 //
 
+static constexpr int nSTPhi = 18;
+static constexpr int nSTEta = 14;
+
+namespace gctobj {
+
+class towerMax {
+  public:
+    float energy;
+    int phi;
+    int eta;
+
+
+    towerMax() {
+      energy = 0;
+      phi = 0;
+      eta = 0;
+    }
+  };
+
+  typedef struct {
+    float et;
+    int eta;
+    int phi;
+  } GCTsupertower_t;
+
+
+  typedef struct {
+    GCTsupertower_t cr[nSTPhi];
+  } etaStrip_t;
+
+  typedef struct {
+    GCTsupertower_t pk[nSTEta];
+  } etaStripPeak_t;
+
+  inline GCTsupertower_t bestOf2(const GCTsupertower_t& calotp0, const GCTsupertower_t& calotp1) {
+   GCTsupertower_t x;
+    x = (calotp0.et > calotp1.et) ? calotp0 : calotp1;
+    return x;
+  }
+
+
+  inline GCTsupertower_t getPeakBin18N(const etaStrip_t& etaStrip) {
+    GCTsupertower_t best01 = bestOf2(etaStrip.cr[0], etaStrip.cr[1]);
+    GCTsupertower_t best23 = bestOf2(etaStrip.cr[2], etaStrip.cr[3]);
+    GCTsupertower_t best45 = bestOf2(etaStrip.cr[4], etaStrip.cr[5]);
+    GCTsupertower_t best67 = bestOf2(etaStrip.cr[6], etaStrip.cr[7]);
+    GCTsupertower_t best89 = bestOf2(etaStrip.cr[8], etaStrip.cr[9]);
+    GCTsupertower_t best1011 = bestOf2(etaStrip.cr[10], etaStrip.cr[11]);
+    GCTsupertower_t best1213 = bestOf2(etaStrip.cr[12], etaStrip.cr[13]);
+    GCTsupertower_t best1415 = bestOf2(etaStrip.cr[14], etaStrip.cr[15]);
+    GCTsupertower_t best1617 = bestOf2(etaStrip.cr[16], etaStrip.cr[17]);
+
+
+
+    GCTsupertower_t best0123 = bestOf2(best01, best23);
+    GCTsupertower_t best4567 = bestOf2(best45, best67);
+    GCTsupertower_t best891011 = bestOf2(best89, best1011);
+    GCTsupertower_t best12131415 = bestOf2(best1213, best1415);
+
+    GCTsupertower_t best0to7 = bestOf2(best0123, best4567);
+    GCTsupertower_t best8to15 = bestOf2(best12131415, best891011);
+
+    GCTsupertower_t best8to17 = bestOf2(best8to15, best1617);
+
+    GCTsupertower_t bestOf18 = bestOf2(best0to7, best8to17);
+
+    return bestOf18;
+ }
+
+   inline towerMax getPeakBin14N(const etaStripPeak_t& etaStrip) {
+    towerMax x;
+
+    GCTsupertower_t best01 = bestOf2(etaStrip.pk[0], etaStrip.pk[1]);
+    GCTsupertower_t best23 = bestOf2(etaStrip.pk[2], etaStrip.pk[3]);
+    GCTsupertower_t best45 = bestOf2(etaStrip.pk[4], etaStrip.pk[5]);
+    GCTsupertower_t best67 = bestOf2(etaStrip.pk[6], etaStrip.pk[7]);
+    GCTsupertower_t best89 = bestOf2(etaStrip.pk[8], etaStrip.pk[8]);
+    GCTsupertower_t best1011 = bestOf2(etaStrip.pk[10], etaStrip.pk[11]);
+    GCTsupertower_t best1213 = bestOf2(etaStrip.pk[12], etaStrip.pk[13]);
+
+    GCTsupertower_t best0123 = bestOf2(best01, best23);
+    GCTsupertower_t best4567 = bestOf2(best45, best67);
+    GCTsupertower_t best891011 = bestOf2(best89, best1011);
+
+    GCTsupertower_t best8to13 = bestOf2(best891011, best1213);
+    GCTsupertower_t best0to7 = bestOf2(best0123, best4567);
+
+    GCTsupertower_t bestOf14 = bestOf2(best0to7, best8to13);
+
+    x.energy = bestOf14.et;
+    x.phi = bestOf14.phi;
+    x.eta = bestOf14.eta;
+    return x;
+  }
+
+    inline towerMax getTowerMax(GCTsupertower_t temp[nSTEta][nSTPhi]) {
+    etaStripPeak_t etaStripPeak;
+
+    for (int i = 0; i < nSTEta; i++) {
+      etaStrip_t test;
+      for (int j = 0; j < nSTPhi; j++) {
+        test.cr[j] = temp[i][j];
+      }
+      etaStripPeak.pk[i] = getPeakBin18N(test);
+    }
+
+    towerMax peakIn14;
+    peakIn14 = getPeakBin14N(etaStripPeak);
+    return peakIn14;
+  }
+
+
+} // namespace gctobj  
+
 class BoostedJetStudies : public edm::one::EDAnalyzer<edm::one::SharedResources> {
 public:
   explicit BoostedJetStudies(const edm::ParameterSet&);
@@ -87,7 +201,7 @@ private:
   // ----------member data ---------------------------
   edm::EDGetTokenT<vector<reco::CaloJet> > jetSrc_;
   edm::EDGetTokenT<vector<pat::Jet> > jetSrcAK8_;
-  //  edm::EDGetTokenT<reco::GenParticleCollection> genSrc_;
+  edm::EDGetTokenT<reco::GenParticleCollection> genSrc_;
 
   edm::EDGetTokenT<BXVector<l1t::Jet>> stage2JetToken_;
   edm::EDGetTokenT<BXVector<l1t::Tau>> stage2TauToken_;
@@ -119,8 +233,7 @@ private:
   std::vector<double>dgt_eta;
   std::vector<double>dgt_phi;
 
-
-  
+    
   double recoPt_;
   std::vector<int> nSubJets, nBHadrons, HFlav;
   std::vector<std::vector<int>> subJetHFlav;
@@ -147,7 +260,7 @@ private:
 BoostedJetStudies::BoostedJetStudies(const edm::ParameterSet& iConfig) :
   jetSrc_(    consumes<vector<reco::CaloJet> >(iConfig.getParameter<edm::InputTag>("recoJets"))),
   jetSrcAK8_( consumes<vector<pat::Jet> >(iConfig.getParameter<edm::InputTag>("recoJetsAK8"))),
-  //  genSrc_( consumes<reco::GenParticleCollection> (iConfig.getParameter<edm::InputTag>( "genParticles"))),
+  genSrc_( consumes<reco::GenParticleCollection> (iConfig.getParameter<edm::InputTag>( "genParticles"))),
   stage2JetToken_(consumes<BXVector<l1t::Jet>>( edm::InputTag("caloStage2Digis","Jet","RECO"))),
   stage2TauToken_(consumes<BXVector<l1t::Tau>>( edm::InputTag("caloStage2Digis","Tau","RECO"))),
   stage2EtSumToken_(consumes<l1t::EtSumBxCollection>( edm::InputTag("caloStage2Digis","EtSum","RECO"))),
@@ -213,14 +326,20 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
   dgt_phi.clear();
   dgt_et.clear(); 
 
-  
+  gctobj::GCTsupertower_t temp[nSTEta][nSTPhi]; 
   for (const auto& region : evt.get(regionsToken_)){
 
     uint32_t ieta = region.id().ieta() - 4; // Subtract off the offset for HF
     uint32_t iphi = region.id().iphi();
     double  et = region.et();
 
-    regionColl_input[ieta][iphi] = et ;  
+    
+    regionColl_input[ieta][iphi] = et ;
+
+     temp[ieta][iphi].eta  = ieta;
+     temp[ieta][iphi].phi = iphi;
+     temp[ieta][iphi].et = et; 
+    
   }
 
   for (unsigned int phi = 0; phi < 18; phi++){
@@ -229,8 +348,34 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
     }
   }
 
- 
+  // for testing the results of maximum et finder 
+ int size = 252; 
 
+    double maxValue = cregions[0];
+    int index = 0;
+
+    for (int i = 1; i < size; ++i) {
+        if (cregions[i] > maxValue) {
+            maxValue = cregions[i];
+            index = i;
+        }
+    }
+    
+    int test_ieta = index % 14; 
+    int test_iphi =static_cast<int>( index / 14); 
+    std::cout << "Highest value of Et: " << maxValue << std::endl;
+    std::cout << "max et Index: " << index << std::endl;
+    std::cout << "mx et ieta: " << test_ieta << std::endl;
+    std::cout << "max et Iphi: " << test_iphi << "\n" << std::endl;
+
+
+    // testing results
+    gctobj::towerMax maxTower  = gctobj::getTowerMax(temp);
+    std::cout << "tower max et = " << maxTower.energy <<std::endl;
+    std::cout << "towe max ieta = " << maxTower.eta << std::endl;
+    std::cout <<"tower max iphi = " << maxTower.phi << "\n" << std::endl; 
+    
+    
   // Accessing existing L1 seed stored in MINIAOD
   edm::Handle<BXVector<l1t::Jet>> stage2Jets;
   if(!evt.getByToken(stage2JetToken_, stage2Jets)) cout<<"ERROR GETTING THE STAGE 2 JETS"<<std::endl;
@@ -380,7 +525,7 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
 
   }
 
-  /*  edm::Handle<reco::GenParticleCollection> genParticles;
+    edm::Handle<reco::GenParticleCollection> genParticles;
   if(evt.getByToken(genSrc_, genParticles)){//Begin Getting Gen Particles
     for (reco::GenParticleCollection::const_iterator genparticle = genParticles->begin(); genparticle != genParticles->end(); genparticle++){
       double DR = reco::deltaR(recoEta_1, recoPhi_1, genparticle->eta(), genparticle->phi());
@@ -393,36 +538,20 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
 	genEta_1 = genparticle->eta();
 	genPhi_1 = genparticle->phi();
 	genM_1 = genparticle->mass();
-	   cout<< "genEta: " << genEta_1 << std::endl;
+	/*   cout<< "genEta: " << genEta_1 << std::endl;
 	      cout<<"genId :" << genId <<std::endl;
 	      cout<< "genEta: " << genEta_1 << std::endl;
-	      cout << "\n" << std::endl; 
+	      cout << "\n" << std::endl;  */ 
 
-	//storing information about daughter particles:
-	//	int n = genparticle -> numberOfDaughters();
-	//cout<< "number of daughter particles: " << n << std::endl;
-	//	for(int j = 0; j < n; ++ j) {
-	//	  const reco::Candidate * d = genparticle->daughter(j);
-	
-	//	     dauId = d->pdgId();
-	//	  cout<< "daughter Id: " << dauId << std::endl;
-	//	   dauEta = d -> eta();
-	//	   dauET = d -> pt();
-	//	   dauPhi= d -> phi();
-
-	//	  dgt_id.push_back(dauId);  // daughter pdgid 
-	//	  dgt_eta.push_back(dauEta);  // eta
-	//	  dgt_phi.push_back(dauPhi); // phi
-	//	  dgt_et.push_back(dauET); //phi } 
       
  	    }
 
       const reco::Candidate *m =      genparticle -> mother();
-      cout<< "check2"  << std::endl;
+      //      cout<< "check2"  << std::endl;
       if (m != nullptr && m->pdgId() == 25){
 	if(genparticle -> pdgId() != 25 && m -> pdgId()  == 25) {
 
-	  cout<< "check3"  << std::endl;
+	  //	  cout<< "check3"  << std::endl;
 	  dauID  = genparticle -> pdgId();
 	  dauET = genparticle -> pt();
 	  dau_phi = genparticle -> phi();
@@ -444,11 +573,123 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
   if (abs(genEta_1) < 2.5) {
     efficiencyTree->Fill();
   }
-*/
+
   efficiencyTree->Fill();
   //  cout<< "check5"  << std::endl;
 }
 
+
+// Define/Initialize structs, classes, variables for the maxregion et finder. 
+/* namespace gctobj {
+
+
+class towerMax {
+  public:
+    float energy;
+    int phi;
+    int eta;
+
+
+    towerMax() {
+      energy = 0;
+      phi = 0;
+      eta = 0;
+      energyMax = 0;
+    }
+  };
+  
+  typedef struct {
+    float et;
+    int eta;
+    int phi;
+  } GCTsupertower_t;
+
+
+  typedef struct {
+    GCTsupertower_t cr[nSTPhi];
+  } etaStrip_t;
+
+  typedef struct {
+    GCTsupertower_t pk[nSTEta];
+    } etaStripPeak_t;
+  
+  inline GCTsupertower_t bestOf2(const GCTsupertower_t& calotp0, const GCTsupertower_t& calotp1) {
+   GCTsupertower_t x;
+    x = (calotp0.et > calotp1.et) ? calotp0 : calotp1;
+    return x;
+  }
+
+ 
+ inline GCTsupertower_t getPeakBin18N(const etaStrip_t& etaStrip) {
+    GCTsupertower_t best01 = bestOf2(etaStrip.cr[0], etaStrip.cr[1]);
+    GCTsupertower_t best23 = bestOf2(etaStrip.cr[2], etaStrip.cr[3]);
+    GCTsupertower_t best45 = bestOf2(etaStrip.cr[4], etaStrip.cr[5]);
+    GCTsupertower_t best67 = bestOf2(etaStrip.cr[6], etaStrip.cr[7]);
+    GCTsupertower_t best89 = bestOf2(etaStrip.cr[8], etaStrip.cr[9]);
+    GCTsupertower_t best1011 = bestOf2(etaStrip.cr[10], etaStrip.cr[11]);
+    GCTsupertower_t best1213 = bestOf2(etaStrip.cr[12], etaStrip.cr[13]);
+    GCTsupertower_t best1415 = bestOf2(etaStrip.cr[14], etaStrip.cr[15]);
+    GCTsupertower_t best1617 = bestOf2(etaStrip.cr[16], etaStrip.cr[17]);
+
+
+
+    GCTsupertower_t best0123 = bestOf2(best01, best23);
+    GCTsupertower_t best4567 = bestOf2(best45, best67);
+    GCTsupertower_t best891011 = bestOf2(best89, best1011);
+    GCTsupertower_t best12131415 = bestOf2(best1213, best1415);
+
+    GCTsupertower_t best0to7 = bestOf2(best0123, best4567);
+    GCTsupertower_t best8to15 = bestOf2(best12131415, best891011);
+
+    GCTsupertower_t best8to17 = bestOf2(best8to15, best1617);
+
+    GCTsupertower_t bestOf18 = bestOf2(best0to7, best8to17);
+
+    return bestOf18; 
+ }
+
+  inline towerMax getPeakBin14N(const etaStripPeak_t& etaStrip) {
+    towerMax x;
+
+    GCTsupertower_t best01 = bestOf2(etaStrip.pk[0], etaStrip.pk[1]);
+    GCTsupertower_t best23 = bestOf2(etaStrip.pk[2], etaStrip.pk[3]);
+    GCTsupertower_t best45 = bestOf2(etaStrip.pk[4], etaStrip.pk[5]);
+    GCTsupertower_t best67 = bestOf2(etaStrip.pk[6], etaStrip.pk[7]);
+    GCTsupertower_t best89 = bestOf2(etaStrip.pk[8], etaStrip.pk[8]);
+    GCTsupertower_t best1011 = bestOf2(etaStrip.pk[10], etaStrip.pk[11]);
+    GCTsupertower_t best1213 = bestOf2(etaStrip.pk[12], etaStrip.pk[13]);
+
+    GCTsupertower_t best0123 = bestOf2(best01, best23);
+    GCTsupertower_t best4567 = bestOf2(best45, best67);
+    GCTsupertower_t best891011 = bestOf2(best89, best1011);
+
+    GCTsupertower_t best8to13 = bestOf2(best891011, best1213);
+    GCTsupertower_t best0to7 = bestOf2(best0123, best4567);
+    
+    GCTsupertower_t bestOf14 = bestOf2(best0to7, best8to13);
+
+    x.energy = bestOf14.et;
+    x.phi = bestOf14.phi;
+    x.eta = bestOf14.eta;
+    return x;
+  }
+ 
+    inline towerMax getTowerMax(GCTsupertower_t temp[nSTEta][nSTPhi]) {
+    etaStripPeak_t etaStripPeak;
+
+    for (int i = 0; i < nSTEta; i++) {
+      etaStrip_t test;
+      for (int j = 0; j < nSTPhi; j++) {
+        test.cr[j] = temp[i][j];
+      }
+      etaStripPeak.pk[i] = getPeakBin18N(test);
+    }
+
+    towerMax peakIn14;
+    peakIn14 = getPeakBin14N(etaStripPeak);
+    return peakIn14;
+  }
+*/ 
   void BoostedJetStudies::zeroOutAllVariables(){
     genPt_1=-99; genEta_1=-99; genPhi_1=-99; genM_1=-99; genDR=99; genId=-99; genMother=-99;
     seedPt_1=-99; seedEta_1=-99; seedPhi_1=-99; seedNthJet_1=-99;
