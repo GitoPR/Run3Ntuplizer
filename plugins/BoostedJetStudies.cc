@@ -60,11 +60,82 @@
 #include "DataFormats/HepMCCandidate/interface/GenParticle.h"
 #include "DataFormats/HepMCCandidate/interface/GenParticleFwd.h"
 
+
 using namespace l1extra;
 using namespace std;
 
 bool compareByPt (l1extra::L1JetParticle i, l1extra::L1JetParticle j) { return(i.pt()>j.pt()); };
 
+  constexpr std::array<double, 42> fillTwrEtaValues() {
+    std::array<double, 42> twrEtaValues = {{0}};
+    twrEtaValues[0] = 0;
+    for (unsigned int i = 0; i < 20; i++) {
+      twrEtaValues[i + 1] = 0.0436 + i * 0.0872;
+    }
+    twrEtaValues[21] = 1.785;
+    twrEtaValues[22] = 1.880;
+    twrEtaValues[23] = 1.9865;
+    twrEtaValues[24] = 2.1075;
+    twrEtaValues[25] = 2.247;
+    twrEtaValues[26] = 2.411;
+    twrEtaValues[27] = 2.575;
+    twrEtaValues[28] = 2.825;
+    twrEtaValues[29] = 999.;
+    twrEtaValues[30] = (3.15 + 2.98) / 2.;
+    twrEtaValues[31] = (3.33 + 3.15) / 2.;
+    twrEtaValues[32] = (3.50 + 3.33) / 2.;
+    twrEtaValues[33] = (3.68 + 3.50) / 2.;
+    twrEtaValues[34] = (3.68 + 3.85) / 2.;
+    twrEtaValues[35] = (3.85 + 4.03) / 2.;
+    twrEtaValues[36] = (4.03 + 4.20) / 2.;
+    twrEtaValues[37] = (4.20 + 4.38) / 2.;
+    twrEtaValues[38] = (4.74 + 4.38 * 3) / 4.;
+    twrEtaValues[39] = (4.38 + 4.74 * 3) / 4.;
+    twrEtaValues[40] = (5.21 + 4.74 * 3) / 4.;
+    twrEtaValues[41] = (4.74 + 5.21 * 3) / 4.;
+    return twrEtaValues;
+  }
+  constexpr std::array<double, 42> twrEtaValues = fillTwrEtaValues();
+
+
+double getUCTTowerEta(int caloEta) {
+  uint32_t absCaloEta = std::abs(caloEta);
+  if (absCaloEta <= 41) {
+    if (caloEta < 0)
+      return -twrEtaValues[absCaloEta];
+    else
+      return +twrEtaValues[absCaloEta];
+  } else
+    return -999.;
+}
+
+double getUCTTowerPhi(int caloPhi) {
+  if (caloPhi < 1)
+    return -999.;
+  else if (caloPhi > 72)
+    return +999.;
+  uint32_t absCaloPhi = std::abs(caloPhi) - 1;
+  if (absCaloPhi < 36)
+    return (((double)absCaloPhi + 0.5) * 0.0872);
+  else
+    return (-(71.5 - (double)absCaloPhi) * 0.0872);
+}
+
+namespace l1tcalo {
+  constexpr uint32_t RegionETMask{0x000003FF};
+  constexpr uint32_t RegionEGVeto{0x00000400};
+  constexpr uint32_t RegionTauVeto{0x00000800};
+  constexpr uint32_t HitTowerBits{0x0000F000};
+  constexpr uint32_t RegionNoBits{0x000F0000};
+  constexpr uint32_t CardNoBits{0x00700000};
+  constexpr uint32_t CrateNoBits{0x01800000};
+  constexpr uint32_t NegEtaBit{0x80000000};
+  constexpr uint32_t LocationBits{0xFFFFF000};
+  constexpr uint32_t LocationShift{12};
+  constexpr uint32_t RegionNoShift{16};
+  constexpr uint32_t CardNoShift{20};
+  constexpr uint32_t CrateNoShift{23};
+}  // namespace l1tcalo
 
 typedef int loop; //loop type(i guess)                                                                                                                                                               
 //Jet class                                                                                                                                                                                                 
@@ -103,22 +174,32 @@ namespace gctobj {
 
 class towerMax {
   public:
-    float energy;
-    int phi;
-    int eta;
-
-
+  int energy;
+  int iphi;
+  int ieta;
+  int towerEta;
+  int towerPhi; 
+  double eta;
+  double phi; 
     towerMax() {
       energy = 0;
       phi = 0;
       eta = 0;
+      towerEta = 0 ;
+      towerPhi = 0;
+      ieta = 0;
+      iphi = 0;
     }
   };
 
   typedef struct {
-    float et;
-    int eta;
-    int phi;
+    int et;
+    int ieta;
+    int iphi;
+    int towerEta; 
+    int towerPhi;
+    double eta;
+    double phi; 
   } GCTsupertower_t;
 
 
@@ -186,8 +267,12 @@ class towerMax {
     GCTsupertower_t bestOf14 = bestOf2(best0to7, best8to13);
 
     x.energy = bestOf14.et;
-    x.phi = bestOf14.phi;
+    x.iphi = bestOf14.iphi;
+    x.ieta = bestOf14.ieta;
     x.eta = bestOf14.eta;
+    x.phi = bestOf14.phi;
+    x.towerEta = bestOf14.towerEta;
+    x.towerPhi = bestOf14.towerPhi;
     return x;
   }
 
@@ -223,6 +308,7 @@ jetInfo getJetValues(gctobj::GCTsupertower_t tempX[nSTEta][nSTPhi], int seed_eta
   jetInfo jet_tmp;
 
 
+
   for(loop i=0; i<nSTEta+2; i++){
 #pragma HLS UNROLL
     for(loop k=0; k<nSTPhi+2; k++){
@@ -243,7 +329,7 @@ jetInfo getJetValues(gctobj::GCTsupertower_t tempX[nSTEta][nSTPhi], int seed_eta
     for(loop k=0; k<nSTPhi; k++){
 #pragma HLS UNROLL
       temp[i+1][k+1] = tempX[i][k].et ;
-
+      //      std::cout << "tempX[i][k].et : " << tempX[i][k].et << std::endl; 
     }
   }
 
@@ -258,12 +344,13 @@ jetInfo getJetValues(gctobj::GCTsupertower_t tempX[nSTEta][nSTPhi], int seed_eta
     for(loop k=0; k<nSTPhi; k++){
 #pragma HLS UNROLL
       if(j== seed_eta1 && k == seed_phi1){
-        std::cout << "seed_eta1 : " << j << "seed_phi1 : " << k << std::endl;
+        std::cout << "seed_eta1 : " << j  << "\t" << "seed_phi1 : " << k << std::endl;
         for(loop m=0; m<3 ; m++){
 #pragma HLS UNROLL
           tmp1 = temp[j+m][k] ;
           tmp2 = temp[j+m][k+1] ;
           tmp3 = temp[j+m][k+2] ;
+	  //std::cout << "tmp1 : " << tmp1 << "\t" << "tmp2 : " << tmp2 << "\t" << "tmp3 : " << tmp3 << "\n" << std::endl;
           eta_slice[m] = tmp1 + tmp2 + tmp3 ; // Sum the energies of 3 3x1 adjacent slices to make the 3x3.
 	} 
       }
@@ -271,11 +358,11 @@ jetInfo getJetValues(gctobj::GCTsupertower_t tempX[nSTEta][nSTPhi], int seed_eta
   }
   
  jet_tmp.energy=eta_slice[0] + eta_slice[1] + eta_slice[2];
-  std::cout << "eta_slice[0] : " << eta_slice[0] << std::endl;
-  std::cout << "eta_slice[1] : " << eta_slice[1] << std::endl;
-  std::cout << "eta_slice[2] : " << eta_slice[2] << std::endl;
-  std::cout << " jet_tmp.energy : " <<  jet_tmp.energy << std::endl;
-
+ //   std::cout << "eta_slice[0] : " << eta_slice[0] << std::endl;
+ //std::cout << "eta_slice[1] : " << eta_slice[1] << std::endl;
+ //std::cout << "eta_slice[2] : " << eta_slice[2] << std::endl;
+    std::cout << " jet_tmp.energy : " <<  jet_tmp.energy <<"\n" <<std::endl; 
+  
 
   for(loop i=0; i<nSTEta; i++){
     if(i+1>=seed_eta && i<=seed_eta+1){
@@ -295,7 +382,7 @@ class BoostedJetStudies : public edm::one::EDAnalyzer<edm::one::SharedResources>
 public:
   explicit BoostedJetStudies(const edm::ParameterSet&);
   ~BoostedJetStudies();
-
+ 
   static void fillDescriptions(edm::ConfigurationDescriptions& descriptions);
   void zeroOutAllVariables();
 
@@ -327,7 +414,7 @@ private:
   double recoPt_1, recoEta_1, recoPhi_1;
   double l1Pt_1, l1Eta_1, l1Phi_1;
   double seedPt_1, seedEta_1, seedPhi_1;
-
+  std::vector<double> clusterCord; 
   
   int l1NthJet_1;
   int recoNthJet_1;
@@ -434,8 +521,9 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
   dgt_eta.clear();
   dgt_phi.clear();
   dgt_et.clear();
-  maxEta.clear();
-  maxPhi.clear(); 
+  clusterCord.clear(); 
+  //  maxEta.clear();
+  //maxPhi.clear(); 
 
   gctobj::GCTsupertower_t temp[nSTEta][nSTPhi]; 
   for (const auto& region : evt.get(regionsToken_)){
@@ -443,24 +531,64 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
     uint32_t ieta = region.id().ieta() - 4; // Subtract off the offset for HF
     uint32_t iphi = region.id().iphi();
     double  et = region.et();
-
+    //    std::cout << "et : " << et << std::endl;
     
-    regionColl_input[ieta][iphi] = et ;
+    uint16_t regionSummary = region.raw();
+    //Read the
+    uint16_t rloc_eta  = ((0xFFFF & regionSummary) >> 14);                                                                                                                                                     uint16_t rloc_phi = ((0x3FFF & regionSummary) >> 12); 
 
-     temp[ieta][iphi].eta  = ieta;
-     temp[ieta][iphi].phi = iphi;
-     temp[ieta][iphi].et = et; 
-    
+    uint32_t towerEta = 4*ieta + rloc_eta;
+    uint32_t towerPhi =	4*iphi + rloc_phi;
+
+    double eta =  getUCTTowerEta(towerEta);
+    double phi = getUCTTowerPhi(towerPhi); 
+      
+    regionColl_input[ieta][iphi] = et;  //regionSummary;
+
+    temp[ieta][iphi].ieta  = ieta;
+    temp[ieta][iphi].iphi = iphi;
+    temp[ieta][iphi].et = et;
+    temp[ieta][iphi].towerEta = towerEta;
+    temp[ieta][iphi].towerPhi = towerPhi;
+    temp[ieta][iphi].eta = eta;
+    temp[ieta][iphi].phi = phi; 
   }
 
   for (unsigned int phi = 0; phi < 18; phi++){
     for (int eta = 0; eta < 14; eta++){
+      //      std::cout << "regionColl_input[eta][phi] : "<<regionColl_input[eta][phi] << std::endl; 
       cregions.push_back(regionColl_input[eta][phi]);
+      
     }
   }
 
-  // for testing the results of maximum et finder 
-  /*  int size = 252; 
+  
+  // ++++++++++ For testing out regionSummary outputs +++++++++++++ 
+  /*  for(int idx = 0 ; idx < 252 ; idx++){
+    std::cout << idx << std::endl; 
+    //std::cout << "rloc_eta: "<<((0xFFFF & cregions[idx]) >> 14)<<"\t"<<"rloc_phi: "<<((0x3FFF & cregions[idx]) >> 12)<< std::endl;
+    uint32_t location = ((cregions[idx] & l1tcalo::LocationBits) >> l1tcalo::LocationShift);
+    bool eleBit = !((l1tcalo::RegionEGVeto & cregions[idx]) == l1tcalo::RegionEGVeto);
+    bool tauBit = !((l1tcalo::RegionTauVeto & cregions[idx]) == l1tcalo::RegionTauVeto);
+    uint32_t hitTowerLocation = (location & 0xF); 
+    //    std::cout << "Hello" << std::endl;
+    //    value  = cregions[idx] ;
+
+    uint16_t rloc_eta  = ((0xFFFF & cregions[idx]) >> 14);
+    uint16_t rloc_phi = ((0x3FFF & cregions[idx]) >> 12);
+    
+    towerEta = 4*
+    //std::cout<< "\t"<<"et: "<<cregions[idx]<<"\t"<<"ieta : "<<idx%14<<"\t"<<"iphi: "<< idx/14 <<"\t"<<"rloc_eta: "<<((0xFFFF & cregions[idx]) >> 14)<<"\t"<<"rloc_phi: "<<((0x3FFF & cregions[idx]) >> 12) << "\t"<<"location: "<<hitTowerLocation<<"\t"<<"eleBit: "<<eleBit<<"\t"<<"tauBit: "<<tauBit<<std::endl;
+    //std::cout<<"count: " <<count<< "\t"<< std::endl; // "et: "<<cregions[idx]<<"\t" << std::endl; 
+
+    }*/ 
+
+  
+
+  
+
+  // +++++++++++ for testing the results of maximum et finder  +++++++++++++++++++ 
+    int size = 252; 
 
     double maxValue = cregions[0];
     int index = 0;
@@ -477,7 +605,7 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
          std::cout << "test max Et: " << maxValue << std::endl;
     std::cout << "test et Index: " << index << std::endl;
     std::cout << "test ieta: " << test_ieta << std::endl;
-    std::cout << "test  Iphi: " << test_iphi << "\n" << std::endl;*/
+    std::cout << "test  Iphi: " << test_iphi << "\n" << std::endl;
 
 
     // testing results
@@ -488,14 +616,26 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
     std::cout << "checking the value of gctobj at the indeces given by test code: " << temp[test_ieta][test_iphi].et << "\n" << std::endl;  */
 
     jetInfo test_jet;
-    
+
+    test_jet.seedEnergy = maxTower.energy;
     test_jet.etaMax = maxTower.eta;
     test_jet.phiMax = maxTower.phi;
+
+    std::cout << "maxTower.ieta : " << maxTower.ieta << std::endl;
+    std::cout << "maxTower.iphi : " << maxTower.iphi << std::endl;
+    std::cout << "maxTower.eta : " << maxTower.eta << std::endl;
+    std::cout << "maxTower.phi : " << maxTower.phi << "\n" << std::endl;
+    clusterCord.insert(clusterCord.end(), {maxTower.eta ,maxTower.phi});
+
+
+     
+     
+    //    maxTower.seedEta*
 
     jetInfo tmp_jet;
     
     
-    tmp_jet = getJetValues(temp,maxTower.eta, maxTower.phi);
+    tmp_jet = getJetValues(temp,maxTower.ieta, maxTower.iphi);
     test_jet.energy = tmp_jet.energy;
 
     /*std::cout << "test_jet.energy : " << test_jet.energy << std::endl;
@@ -752,7 +892,7 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
     tree->Branch("dgt_et" , &dgt_et);
     tree->Branch("dgt_eta" , &dgt_eta);
     tree->Branch("dgt_phi" , &dgt_phi);
-    //tree->Branch("" ,,) put here maxEta and maxPhi 
+    tree->Branch("clusterCord" , &clusterCord);
     
   }
 
