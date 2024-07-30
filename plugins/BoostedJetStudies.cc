@@ -344,7 +344,7 @@ jetInfo getJetValues(gctobj::GCTsupertower_t tempX[nSTEta][nSTPhi], int seed_eta
     for(loop k=0; k<nSTPhi; k++){
 #pragma HLS UNROLL
       if(j== seed_eta1 && k == seed_phi1){
-        std::cout << "seed_eta1 : " << j  << "\t" << "seed_phi1 : " << k << std::endl;
+	std::cout << "seed_eta1 : " << j  << "\t" << "seed_phi1 : " << k << std::endl;
         for(loop m=0; m<3 ; m++){
 #pragma HLS UNROLL
           tmp1 = temp[j+m][k] ;
@@ -361,7 +361,7 @@ jetInfo getJetValues(gctobj::GCTsupertower_t tempX[nSTEta][nSTPhi], int seed_eta
  //   std::cout << "eta_slice[0] : " << eta_slice[0] << std::endl;
  //std::cout << "eta_slice[1] : " << eta_slice[1] << std::endl;
  //std::cout << "eta_slice[2] : " << eta_slice[2] << std::endl;
-    std::cout << " jet_tmp.energy : " <<  jet_tmp.energy <<"\n" <<std::endl; 
+ //    std::cout << " jet_tmp.energy : " <<  jet_tmp.energy <<"\n" <<std::endl; 
   
 
   for(loop i=0; i<nSTEta; i++){
@@ -376,7 +376,275 @@ jetInfo getJetValues(gctobj::GCTsupertower_t tempX[nSTEta][nSTPhi], int seed_eta
 
 
   return jet_tmp ;
-} //end of the getJetValues function    
+} //end of the getJetValues function
+
+typedef struct
+{
+	int iphi; // -41 to 41
+	int ieta; // -28 to 28
+	int side; // 1: negative side, 0: positive side
+
+} calo_coor_t;
+
+//for converting ieta to tower eta:
+const calo_coor_t calo_coor[252] =
+{
+		{ 71 , 25 , 1 },
+		{ 71 , 21 , 1 },
+		{ 71 , 17 , 1 },
+		{ 71 , 13 , 1 },
+		{ 71 , 9 , 1 },
+		{ 71 , 5 , 1 },
+		{ 71 , 1 , 1 },
+		{ 71 , 1 , 0 },
+		{ 71 , 5 , 0 },
+		{ 71 , 9 , 0 },
+		{ 71 , 13 , 0 },
+		{ 71 , 17 , 0 },
+		{ 71 , 21 , 0 },
+		{ 71 , 25 , 0 },
+		{ 3 , 25 , 1 },
+		{ 3 , 21 , 1 },
+		{ 3 , 17 , 1 },
+		{ 3 , 13 , 1 },
+		{ 3 , 9 , 1 },
+		{ 3 , 5 , 1 },
+		{ 3 , 1 , 1 },
+		{ 3 , 1 , 0 },
+		{ 3 , 5 , 0 },
+		{ 3 , 9 , 0 },
+		{ 3 , 13 , 0 },
+		{ 3 , 17 , 0 },
+		{ 3 , 21 , 0 },
+		{ 3 , 25 , 0 },
+		{ 7 , 25 , 1 },
+		{ 7 , 21 , 1 },
+		{ 7 , 17 , 1 },
+		{ 7 , 13 , 1 },
+		{ 7 , 9 , 1 },
+		{ 7 , 5 , 1 },
+		{ 7 , 1 , 1 },
+		{ 7 , 1 , 0 },
+		{ 7 , 5 , 0 },
+		{ 7 , 9 , 0 },
+		{ 7 , 13 , 0 },
+		{ 7 , 17 , 0 },
+		{ 7 , 21 , 0 },
+		{ 7 , 25 , 0 },
+		{ 11 , 25 , 1 },
+		{ 11 , 21 , 1 },
+		{ 11 , 17 , 1 },
+		{ 11 , 13 , 1 },
+		{ 11 , 9 , 1 },
+		{ 11 , 5 , 1 },
+		{ 11 , 1 , 1 },
+		{ 11 , 1 , 0 },
+		{ 11 , 5 , 0 },
+		{ 11 , 9 , 0 },
+		{ 11 , 13 , 0 },
+		{ 11 , 17 , 0 },
+		{ 11 , 21 , 0 },
+		{ 11 , 25 , 0 },
+		{ 15 , 25 , 1 },
+		{ 15 , 21 , 1 },
+		{ 15 , 17 , 1 },
+		{ 15 , 13 , 1 },
+		{ 15 , 9 , 1 },
+		{ 15 , 5 , 1 },
+		{ 15 , 1 , 1 },
+		{ 15 , 1 , 0 },
+		{ 15 , 5 , 0 },
+		{ 15 , 9 , 0 },
+		{ 15 , 13 , 0 },
+		{ 15 , 17 , 0 },
+		{ 15 , 21 , 0 },
+		{ 15 , 25 , 0 },
+		{ 19 , 25 , 1 },
+		{ 19 , 21 , 1 },
+		{ 19 , 17 , 1 },
+		{ 19 , 13 , 1 },
+		{ 19 , 9 , 1 },
+		{ 19 , 5 , 1 },
+		{ 19 , 1 , 1 },
+		{ 19 , 1 , 0 },
+		{ 19 , 5 , 0 },
+		{ 19 , 9 , 0 },
+		{ 19 , 13 , 0 },
+		{ 19 , 17 , 0 },
+		{ 19 , 21 , 0 },
+		{ 19 , 25 , 0 },
+		{ 23 , 25 , 1 },
+		{ 23 , 21 , 1 },
+		{ 23 , 17 , 1 },
+		{ 23 , 13 , 1 },
+		{ 23 , 9 , 1 },
+		{ 23 , 5 , 1 },
+		{ 23 , 1 , 1 },
+		{ 23 , 1 , 0 },
+		{ 23 , 5 , 0 },
+		{ 23 , 9 , 0 },
+		{ 23 , 13 , 0 },
+		{ 23 , 17 , 0 },
+		{ 23 , 21 , 0 },
+		{ 23 , 25 , 0 },
+		{ 27 , 25 , 1 },
+		{ 27 , 21 , 1 },
+		{ 27 , 17 , 1 },
+		{ 27 , 13 , 1 },
+		{ 27 , 9 , 1 },
+		{ 27 , 5 , 1 },
+		{ 27 , 1 , 1 },
+		{ 27 , 1 , 0 },
+		{ 27 , 5 , 0 },
+		{ 27 , 9 , 0 },
+		{ 27 , 13 , 0 },
+		{ 27 , 17 , 0 },
+		{ 27 , 21 , 0 },
+		{ 27 , 25 , 0 },
+		{ 31 , 25 , 1 },
+		{ 31 , 21 , 1 },
+		{ 31 , 17 , 1 },
+		{ 31 , 13 , 1 },
+		{ 31 , 9 , 1 },
+		{ 31 , 5 , 1 },
+		{ 31 , 1 , 1 },
+		{ 31 , 1 , 0 },
+		{ 31 , 5 , 0 },
+		{ 31 , 9 , 0 },
+		{ 31 , 13 , 0 },
+		{ 31 , 17 , 0 },
+		{ 31 , 21 , 0 },
+		{ 31 , 25 , 0 },
+		{ 35 , 25 , 1 },
+		{ 35 , 21 , 1 },
+		{ 35 , 17 , 1 },
+		{ 35 , 13 , 1 },
+		{ 35 , 9 , 1 },
+		{ 35 , 5 , 1 },
+		{ 35 , 1 , 1 },
+		{ 35 , 1 , 0 },
+		{ 35 , 5 , 0 },
+		{ 35 , 9 , 0 },
+		{ 35 , 13 , 0 },
+		{ 35 , 17 , 0 },
+		{ 35 , 21 , 0 },
+		{ 35 , 25 , 0 },
+		{ 39 , 25 , 1 },
+		{ 39 , 21 , 1 },
+		{ 39 , 17 , 1 },
+		{ 39 , 13 , 1 },
+		{ 39 , 9 , 1 },
+		{ 39 , 5 , 1 },
+		{ 39 , 1 , 1 },
+		{ 39 , 1 , 0 },
+		{ 39 , 5 , 0 },
+		{ 39 , 9 , 0 },
+		{ 39 , 13 , 0 },
+		{ 39 , 17 , 0 },
+		{ 39 , 21 , 0 },
+		{ 39 , 25 , 0 },
+		{ 43 , 25 , 1 },
+		{ 43 , 21 , 1 },
+		{ 43 , 17 , 1 },
+		{ 43 , 13 , 1 },
+		{ 43 , 9 , 1 },
+		{ 43 , 5 , 1 },
+		{ 43 , 1 , 1 },
+		{ 43 , 1 , 0 },
+		{ 43 , 5 , 0 },
+		{ 43 , 9 , 0 },
+		{ 43 , 13 , 0 },
+		{ 43 , 17 , 0 },
+		{ 43 , 21 , 0 },
+		{ 43 , 25 , 0 },
+		{ 47 , 25 , 1 },
+		{ 47 , 21 , 1 },
+		{ 47 , 17 , 1 },
+		{ 47 , 13 , 1 },
+		{ 47 , 9 , 1 },
+		{ 47 , 5 , 1 },
+		{ 47 , 1 , 1 },
+		{ 47 , 1 , 0 },
+		{ 47 , 5 , 0 },
+		{ 47 , 9 , 0 },
+		{ 47 , 13 , 0 },
+		{ 47 , 17 , 0 },
+		{ 47 , 21 , 0 },
+		{ 47 , 25 , 0 },
+		{ 51 , 25 , 1 },
+		{ 51 , 21 , 1 },
+		{ 51 , 17 , 1 },
+		{ 51 , 13 , 1 },
+		{ 51 , 9 , 1 },
+		{ 51 , 5 , 1 },
+		{ 51 , 1 , 1 },
+		{ 51 , 1 , 0 },
+		{ 51 , 5 , 0 },
+		{ 51 , 9 , 0 },
+		{ 51 , 13 , 0 },
+		{ 51 , 17 , 0 },
+		{ 51 , 21 , 0 },
+		{ 51 , 25 , 0 },
+		{ 55 , 25 , 1 },
+		{ 55 , 21 , 1 },
+		{ 55 , 17 , 1 },
+		{ 55 , 13 , 1 },
+		{ 55 , 9 , 1 },
+		{ 55 , 5 , 1 },
+		{ 55 , 1 , 1 },
+		{ 55 , 1 , 0 },
+		{ 55 , 5 , 0 },
+		{ 55 , 9 , 0 },
+		{ 55 , 13 , 0 },
+		{ 55 , 17 , 0 },
+		{ 55 , 21 , 0 },
+		{ 55 , 25 , 0 },
+		{ 59 , 25 , 1 },
+		{ 59 , 21 , 1 },
+		{ 59 , 17 , 1 },
+		{ 59 , 13 , 1 },
+		{ 59 , 9 , 1 },
+		{ 59 , 5 , 1 },
+		{ 59 , 1 , 1 },
+		{ 59 , 1 , 0 },
+		{ 59 , 5 , 0 },
+		{ 59 , 9 , 0 },
+		{ 59 , 13 , 0 },
+		{ 59 , 17 , 0 },
+		{ 59 , 21 , 0 },
+		{ 59 , 25 , 0 },
+		{ 63 , 25 , 1 },
+		{ 63 , 21 , 1 },
+		{ 63 , 17 , 1 },
+		{ 63 , 13 , 1 },
+		{ 63 , 9 , 1 },
+		{ 63 , 5 , 1 },
+		{ 63 , 1 , 1 },
+		{ 63 , 1 , 0 },
+		{ 63 , 5 , 0 },
+		{ 63 , 9 , 0 },
+		{ 63 , 13 , 0 },
+		{ 63 , 17 , 0 },
+		{ 63 , 21 , 0 },
+		{ 63 , 25 , 0 },
+		{ 67 , 25 , 1 },
+		{ 67 , 21 , 1 },
+		{ 67 , 17 , 1 },
+		{ 67 , 13 , 1 },
+		{ 67 , 9 , 1 },
+		{ 67 , 5 , 1 },
+		{ 67 , 1 , 1 },
+		{ 67 , 1 , 0 },
+		{ 67 , 5 , 0 },
+		{ 67 , 9 , 0 },
+		{ 67 , 13 , 0 },
+		{ 67 , 17 , 0 },
+		{ 67 , 21 , 0 },
+		{ 67 , 25 , 0 }
+
+};
+
+
 
 class BoostedJetStudies : public edm::one::EDAnalyzer<edm::one::SharedResources> {
 public:
@@ -531,15 +799,33 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
     uint32_t ieta = region.id().ieta() - 4; // Subtract off the offset for HF
     uint32_t iphi = region.id().iphi();
     double  et = region.et();
-    //    std::cout << "et : " << et << std::endl;
+    //  std::cout << "et : " << et << std::endl;
     
     uint16_t regionSummary = region.raw();
-    //Read the
-    uint16_t rloc_eta  = ((0xFFFF & regionSummary) >> 14);                                                                                                                                                     uint16_t rloc_phi = ((0x3FFF & regionSummary) >> 12); 
+    
+    uint16_t rloc_eta  = ((0xFFFF & regionSummary) >> 14);
+    uint16_t rloc_phi = ((0x3FFF & regionSummary) >> 12); 
+    
+    int calo_index = 14*iphi + ieta; // if we need to we can make another index table to reduce the cost of resources of this operation.
 
-    uint32_t towerEta = 4*ieta + rloc_eta;
-    uint32_t towerPhi =	4*iphi + rloc_phi;
+    calo_coor_t calo_coor_event = calo_coor[calo_index];
+    std::cout << "calo_coor_event.side : " << calo_coor_event.side << std::endl; 
 
+    int towerEta;
+    
+    int towerPhi = calo_coor_event.iphi + rloc_phi;
+      if (calo_coor_event.side > 0){ 
+	towerEta = - calo_coor_event.ieta + rloc_eta ;
+	
+      }
+      else{
+	towerEta = calo_coor_event.ieta + rloc_eta;
+
+	} 
+    //    int towerPhi = ;
+    
+    //    std::cout << "towerEta : " << towerEta << "\t" << "towerPhi : " << towerPhi << "\n" << std::endl;
+    
     double eta =  getUCTTowerEta(towerEta);
     double phi = getUCTTowerPhi(towerPhi); 
       
@@ -588,7 +874,7 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
   
 
   // +++++++++++ for testing the results of maximum et finder  +++++++++++++++++++ 
-    int size = 252; 
+  /*int size = 252; 
 
     double maxValue = cregions[0];
     int index = 0;
@@ -602,10 +888,10 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
     
     int test_ieta = index % 14; 
     int test_iphi =static_cast<int>( index / 14); 
-         std::cout << "test max Et: " << maxValue << std::endl;
+    std::cout << "test max Et: " << maxValue << std::endl;
     std::cout << "test et Index: " << index << std::endl;
     std::cout << "test ieta: " << test_ieta << std::endl;
-    std::cout << "test  Iphi: " << test_iphi << "\n" << std::endl;
+    std::cout << "test  Iphi: " << test_iphi << "\n" << std::endl; */
 
 
     // testing results
@@ -621,10 +907,11 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
     test_jet.etaMax = maxTower.eta;
     test_jet.phiMax = maxTower.phi;
 
-    std::cout << "maxTower.ieta : " << maxTower.ieta << std::endl;
+    std::cout << "maxTower.towerEta" << maxTower.towerEta<<"\t"  << "maxTower.towerPhi : " << maxTower.towerPhi << "\n" <<std::endl; 
+    /*std::cout << "maxTower.ieta : " << maxTower.ieta << std::endl;
     std::cout << "maxTower.iphi : " << maxTower.iphi << std::endl;
     std::cout << "maxTower.eta : " << maxTower.eta << std::endl;
-    std::cout << "maxTower.phi : " << maxTower.phi << "\n" << std::endl;
+    std::cout << "maxTower.phi : " << maxTower.phi << "\n" << std::endl;*/
     clusterCord.insert(clusterCord.end(), {maxTower.eta ,maxTower.phi});
 
 
