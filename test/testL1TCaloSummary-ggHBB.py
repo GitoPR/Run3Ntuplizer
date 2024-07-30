@@ -69,7 +69,7 @@ process.out = cms.OutputModule("PoolOutputModule",
 #Output
 process.TFileService = cms.Service(
 	"TFileService",
-	fileName = cms.string("l1TNtuple-ggHBB.root")
+	fileName = cms.string("l1TNtuple-ggHBB-maxEtfinder-test.root")
 )
 
 process.p = cms.Path(process.l1tCaloLayer1Digis*process.simCaloStage2Layer1Digis*process.l1NtupleProducer)
