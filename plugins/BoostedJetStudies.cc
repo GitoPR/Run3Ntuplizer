@@ -296,29 +296,22 @@ class towerMax {
 } // namespace gctobj
 
 jetInfo getJetValues(gctobj::GCTsupertower_t tempX[nSTEta][nSTPhi], int seed_eta, int seed_phi ){
-#pragma HLS ARRAY_PARTITION variable=tempX complete dim=0
-#pragma HLS latency min=6
 
   int temp[nSTEta+2][nSTPhi+2] ;
-#pragma HLS ARRAY_PARTITION variable=temp complete dim=0
 
   int eta_slice[3] ;
-#pragma HLS ARRAY_PARTITION variable=eta_slice complete dim=0
 
   jetInfo jet_tmp;
 
 
 
   for(loop i=0; i<nSTEta+2; i++){
-#pragma HLS UNROLL
     for(loop k=0; k<nSTPhi+2; k++){
-#pragma HLS UNROLL
       temp[i][k] = 0 ;
     }
   }
 
   for(loop i=0; i<nSTEta; i++){
-#pragma HLS UNROLL
 
     //    std::cout<< "tempX[i][17].et : " << tempX[i][17].et << "\n"<< "tempX[i][0].et : " << tempX[i][0].et << "\n"<<std::endl;
     
@@ -327,7 +320,6 @@ jetInfo getJetValues(gctobj::GCTsupertower_t tempX[nSTEta][nSTPhi], int seed_eta
 
     
     for(loop k=0; k<nSTPhi; k++){
-#pragma HLS UNROLL
       temp[i+1][k+1] = tempX[i][k].et ;
       //      std::cout << "tempX[i][k].et : " << tempX[i][k].et << std::endl; 
     }
@@ -342,11 +334,9 @@ jetInfo getJetValues(gctobj::GCTsupertower_t tempX[nSTEta][nSTPhi], int seed_eta
 
   for(loop j=0; j<nSTEta; j++){
     for(loop k=0; k<nSTPhi; k++){
-#pragma HLS UNROLL
       if(j== seed_eta1 && k == seed_phi1){
 	std::cout << "seed_eta1 : " << j  << "\t" << "seed_phi1 : " << k << std::endl;
         for(loop m=0; m<3 ; m++){
-#pragma HLS UNROLL
           tmp1 = temp[j+m][k] ;
           tmp2 = temp[j+m][k+1] ;
           tmp3 = temp[j+m][k+2] ;
@@ -367,7 +357,6 @@ jetInfo getJetValues(gctobj::GCTsupertower_t tempX[nSTEta][nSTPhi], int seed_eta
   for(loop i=0; i<nSTEta; i++){
     if(i+1>=seed_eta && i<=seed_eta+1){
       for(loop k=0; k<nSTPhi; k++){
-#pragma HLS UNROLL
         if(k+1>=seed_phi && k<=seed_phi+1)  tempX[i][k].et = 0 ; // set the 3x3 energies to 0
       } 
     }
@@ -809,22 +798,16 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
     int calo_index = 14*iphi + ieta; // if we need to we can make another index table to reduce the cost of resources of this operation.
 
     calo_coor_t calo_coor_event = calo_coor[calo_index];
-    std::cout << "calo_coor_event.side : " << calo_coor_event.side << std::endl; 
+    //    std::cout << "calo_coor_event.side : " << calo_coor_event.side << std::endl; 
 
-    int towerEta;
-    
+    int towerEta = calo_coor_event.ieta + rloc_eta;
     int towerPhi = calo_coor_event.iphi + rloc_phi;
       if (calo_coor_event.side > 0){ 
-	towerEta = - calo_coor_event.ieta + rloc_eta ;
+	towerEta = -towerEta; 
 	
       }
-      else{
-	towerEta = calo_coor_event.ieta + rloc_eta;
 
-	} 
-    //    int towerPhi = ;
-    
-    //    std::cout << "towerEta : " << towerEta << "\t" << "towerPhi : " << towerPhi << "\n" << std::endl;
+      //    std::cout << "towerEta : " << towerEta << "\t" << "towerPhi : " << towerPhi << "\n" << std::endl;
     
     double eta =  getUCTTowerEta(towerEta);
     double phi = getUCTTowerPhi(towerPhi); 
