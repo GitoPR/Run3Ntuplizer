@@ -831,59 +831,10 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
       
     }
   }
-
-  
-  // ++++++++++ For testing out regionSummary outputs +++++++++++++ 
-  /*  for(int idx = 0 ; idx < 252 ; idx++){
-    std::cout << idx << std::endl; 
-    //std::cout << "rloc_eta: "<<((0xFFFF & cregions[idx]) >> 14)<<"\t"<<"rloc_phi: "<<((0x3FFF & cregions[idx]) >> 12)<< std::endl;
-    uint32_t location = ((cregions[idx] & l1tcalo::LocationBits) >> l1tcalo::LocationShift);
-    bool eleBit = !((l1tcalo::RegionEGVeto & cregions[idx]) == l1tcalo::RegionEGVeto);
-    bool tauBit = !((l1tcalo::RegionTauVeto & cregions[idx]) == l1tcalo::RegionTauVeto);
-    uint32_t hitTowerLocation = (location & 0xF); 
-    //    std::cout << "Hello" << std::endl;
-    //    value  = cregions[idx] ;
-
-    uint16_t rloc_eta  = ((0xFFFF & cregions[idx]) >> 14);
-    uint16_t rloc_phi = ((0x3FFF & cregions[idx]) >> 12);
-    
-    towerEta = 4*
-    //std::cout<< "\t"<<"et: "<<cregions[idx]<<"\t"<<"ieta : "<<idx%14<<"\t"<<"iphi: "<< idx/14 <<"\t"<<"rloc_eta: "<<((0xFFFF & cregions[idx]) >> 14)<<"\t"<<"rloc_phi: "<<((0x3FFF & cregions[idx]) >> 12) << "\t"<<"location: "<<hitTowerLocation<<"\t"<<"eleBit: "<<eleBit<<"\t"<<"tauBit: "<<tauBit<<std::endl;
-    //std::cout<<"count: " <<count<< "\t"<< std::endl; // "et: "<<cregions[idx]<<"\t" << std::endl; 
-
-    }*/ 
-
   
 
-  
-
-  // +++++++++++ for testing the results of maximum et finder  +++++++++++++++++++ 
-  /*int size = 252; 
-
-    double maxValue = cregions[0];
-    int index = 0;
-
-    for (int i = 1; i < size; ++i) {
-        if (cregions[i] > maxValue) {
-            maxValue = cregions[i];
-            index = i;
-        }
-    }
-    
-    int test_ieta = index % 14; 
-    int test_iphi =static_cast<int>( index / 14); 
-    std::cout << "test max Et: " << maxValue << std::endl;
-    std::cout << "test et Index: " << index << std::endl;
-    std::cout << "test ieta: " << test_ieta << std::endl;
-    std::cout << "test  Iphi: " << test_iphi << "\n" << std::endl; */
-
-
-    // testing results
+   // testing results
     gctobj::towerMax maxTower  = gctobj::getTowerMax(temp);
-    /* std::cout << "algorithm max et = " << maxTower.energy <<std::endl;
-    std::cout << "algorithm ieta = " << maxTower.eta << std::endl;
-    std::cout <<"algorithm iphi = " << maxTower.phi << "\n" << std::endl; 
-    std::cout << "checking the value of gctobj at the indeces given by test code: " << temp[test_ieta][test_iphi].et << "\n" << std::endl;  */
 
     jetInfo test_jet;
 
@@ -891,15 +842,11 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
     test_jet.etaMax = maxTower.eta;
     test_jet.phiMax = maxTower.phi;
 
-    std::cout << "maxTower.towerEta" << maxTower.towerEta<<"\t"  << "maxTower.towerPhi : " << maxTower.towerPhi << "\n" <<std::endl; 
-    /*std::cout << "maxTower.ieta : " << maxTower.ieta << std::endl;
-    std::cout << "maxTower.iphi : " << maxTower.iphi << std::endl;
-    std::cout << "maxTower.eta : " << maxTower.eta << std::endl;
-    std::cout << "maxTower.phi : " << maxTower.phi << "\n" << std::endl;*/
-    clusterCord.insert(clusterCord.end(), {maxTower.eta ,maxTower.phi});
+    //    std::cout << "maxTower.towerEta" << maxTower.towerEta<<"\t"  << "maxTower.towerPhi : " << maxTower.towerPhi << "\n" <<std::endl; 
+    /*   clusterCord.insert(clusterCord.end(), {maxTower.eta ,maxTower.phi});
     jetClusterPt = test_jet.seedEnergy;
     jetClusterEta = test_jet.etaMax;
-    jetClusterPhi = test_jet.phiMax;
+    jetClusterPhi = test_jet.phiMax; 
 
 
 
@@ -911,7 +858,7 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
     
     
     tmp_jet = getJetValues(temp,maxTower.ieta, maxTower.iphi);
-    test_jet.energy = tmp_jet.energy;
+    test_jet.energy = tmp_jet.energy;*/ 
 
     /*std::cout << "test_jet.energy : " << test_jet.energy << std::endl;
     std::cout << "test_jet.phi : " << test_jet.phiMax << std::endl;
@@ -1111,6 +1058,24 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
 
     }
   }
+
+  // testing results
+  /*    gctobj::towerMax maxTower  = gctobj::getTowerMax(temp);
+
+    jetInfo test_jet;
+
+    test_jet.seedEnergy = maxTower.energy;
+    test_jet.etaMax = maxTower.eta;
+    test_jet.phiMax = maxTower.phi;*/ 
+
+    //    std::cout << "maxTower.towerEta" << maxTower.towerEta<<"\t"  << "maxTower.towerPhi : " << maxTower.towerPhi << "\n" <<std::endl;
+    
+    clusterCord.insert(clusterCord.end(), {maxTower.eta ,maxTower.phi});
+    if (reco::deltaR(test_jet.etaMax , test_jet.phiMax , recoEta_1, recoPhi_1) < 0.4) {
+      jetClusterPt = test_jet.seedEnergy;
+      jetClusterEta = test_jet.etaMax;
+      jetClusterPhi = test_jet.phiMax;
+    }
   if (abs(genEta_1) < 2.5) {
     efficiencyTree->Fill();
   }

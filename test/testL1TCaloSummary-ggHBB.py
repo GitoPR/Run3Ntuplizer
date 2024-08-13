@@ -36,7 +36,7 @@ process = L1TReEmulFromRAW(process)
 
 process.load("L1Trigger.Run3Ntuplizer.l1BoostedJetStudies_cfi")
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(10) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 process.source = cms.Source("PoolSource",
                             fileNames = cms.untracked.vstring(
                                 'root://cms-xrd-global.cern.ch//store/user/joeherna/Boosted_ggHbb_M-125_Pt-250_GENSIM/Boosted_ggHbb_M-125_Pt-250_MINIAOD/231115_211847/0000/RunIIAutumn18MiniAOD_test2_november13_1368980_1374280_1.root'
@@ -69,7 +69,7 @@ process.out = cms.OutputModule("PoolOutputModule",
 #Output
 process.TFileService = cms.Service(
 	"TFileService",
-	fileName = cms.string("l1TNtuple-ggHBB-maxEtfinder-test.root")
+	fileName = cms.string("l1TNtuple-ggHBB-test.root")
 )
 
 process.p = cms.Path(process.l1tCaloLayer1Digis*process.simCaloStage2Layer1Digis*process.l1NtupleProducer)
