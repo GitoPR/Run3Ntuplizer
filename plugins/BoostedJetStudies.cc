@@ -670,6 +670,7 @@ private:
   int genId, genMother, dauID;
   double recoPt_1, recoEta_1, recoPhi_1;
   double l1Pt_1, l1Eta_1, l1Phi_1;
+  double jetClusterPt, jetClusterEta, jetClusterPhi ;
   double seedPt_1, seedEta_1, seedPhi_1;
   std::vector<double> clusterCord; 
   
@@ -896,6 +897,10 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
     std::cout << "maxTower.eta : " << maxTower.eta << std::endl;
     std::cout << "maxTower.phi : " << maxTower.phi << "\n" << std::endl;*/
     clusterCord.insert(clusterCord.end(), {maxTower.eta ,maxTower.phi});
+    jetClusterPt = test_jet.seedEnergy;
+    jetClusterEta = test_jet.etaMax;
+    jetClusterPhi = test_jet.phiMax;
+
 
 
      
@@ -1080,7 +1085,7 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
 	      cout << "\n" << std::endl;  */ 
 
       
- 	    }
+      }
 
       const reco::Candidate *m =      genparticle -> mother();
       //      cout<< "check2"  << std::endl;
@@ -1100,8 +1105,8 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
 
 
       
+	}
       }
-       }
       //      cout<< "check4"  << std::endl;
 
     }
@@ -1110,7 +1115,7 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
     efficiencyTree->Fill();
   }
 
-  efficiencyTree->Fill();
+  //  efficiencyTree->Fill();
   //  cout<< "check5"  << std::endl;
 }
 
@@ -1120,6 +1125,7 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
     seedPt_1=-99; seedEta_1=-99; seedPhi_1=-99; seedNthJet_1=-99;
     recoPt_1=-99; recoEta_1=-99; recoPhi_1=-99; recoNthJet_1=-99;
     l1Pt_1=-99; l1Eta_1=-99; l1Phi_1=-99; l1NthJet_1=-99;
+    jetClusterPt = -99 ; jetClusterEta = -99;  jetClusterPhi = - 99; 
     recoPt_=-99; dauID = -99;  dauET = -99; dau_phi =-99; dau_eta = -99; // maxEta = -99 ;maxPhi = -99; 
   }
 
@@ -1142,6 +1148,9 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
     tree->Branch("recoEta_1",     &recoEta_1,    "recoEta_1/D");
     tree->Branch("recoPhi_1",     &recoPhi_1,    "recoPhi_1/D");
     tree->Branch("recoNthJet_1",  &recoNthJet_1, "recoNthJet_1/I");
+    tree->Branch("jetClusterPt",  &jetClusterPt,       "jetClusterPt/D");
+    tree->Branch("jetClusterEta",  &jetClusterEta,       "jetClusterEta/D");
+    tree->Branch("jetClusterPhi",  &jetClusterPhi,       "jetClusterPhi/D");
     tree->Branch("l1Pt_1",        &l1Pt_1,       "l1Pt_1/D"); 
     tree->Branch("l1Eta_1",       &l1Eta_1,      "l1Eta_1/D");
     tree->Branch("l1Phi_1",       &l1Phi_1,      "l1Phi_1/D");
