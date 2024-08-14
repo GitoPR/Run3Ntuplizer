@@ -97,60 +97,60 @@ public :
    vector<TLorentzVector> *subJets;
 
    // List of branches
-   TBranch        *b_run;   //!
-   TBranch        *b_lumi;   //!
-   TBranch        *b_event;   //!
-   TBranch        *b_genDR;   //!
-   TBranch        *b_genId;   //!
-   TBranch        *b_recoPt_1;   //!
-   TBranch        *b_recoEta_1;   //!
-   TBranch        *b_recoPhi_1;   //!
-   TBranch        *b_recoNthJet_1;   //!
-   TBranch        *b_recoPt_2;   //!
-   TBranch        *b_recoEta_2;   //!
-   TBranch        *b_recoPhi_2;   //!
-   TBranch        *b_recoNthJet_2;   //!
-   TBranch        *b_recoDeltaEta;   //!
-   TBranch        *b_recoDeltaPhi;   //!
-   TBranch        *b_recoDeltaR;   //!
-   TBranch        *b_recoMass;   //!
-   TBranch        *b_l1Pt_1;   //!
-   TBranch        *b_l1Eta_1;   //!
-   TBranch        *b_l1Phi_1;
-   TBranch       *jetClusterPt;
-  TBranch        *jetClusterEta;
-  TBranch        *jetClusterPhi;//!
-   TBranch        *b_l1NthJet_1;   //!
-   TBranch        *b_l1NTau_1;   //!
-   TBranch        *b_l1Pt_2;   //!
-   TBranch        *b_l1Eta_2;   //!
-   TBranch        *b_l1Phi_2;   //!
-   TBranch        *b_l1NthJet_2;   //!
-   TBranch        *b_l1NTau_2;   //!
-   TBranch        *b_l1DeltaEta;   //!
-   TBranch        *b_l1DeltaPhi;   //!
-   TBranch        *b_l1DeltaR;   //!
-   TBranch        *b_l1Mass;   //!
-   TBranch        *b_l1Matched_1;   //!
-   TBranch        *b_l1Matched_2;   //!
-   TBranch        *b_nRecoJets;   //!
-   TBranch        *b_nL1Jets;   //!
-   TBranch        *b_vbfBDT;   //!
-   TBranch        *b_tau1;   //!
-   TBranch        *b_tau2;   //!
-   TBranch        *b_tau3;   //!
-   TBranch        *b_nSubJets;   //!
-   TBranch        *b_subJetHFlav;   //!
-   TBranch        *b_nBHadrons;   //!
-   TBranch        *b_nL1Taus;   //!
-   TBranch        *b_allRegions;   //!
-   TBranch        *b_hcalTPGs;   //!
-   TBranch        *b_ecalTPGs;   //!
-   TBranch        *b_caloClusters;   //!
-   TBranch        *b_l1Jets;   //!
-   TBranch        *b_ak8Jets;   //!
-   TBranch        *b_subJets;   //!
-
+  TBranch        *b_run;   //!
+  TBranch        *b_lumi;   //!
+  TBranch        *b_event;   //!
+  TBranch        *b_genDR;   //!
+  TBranch        *b_genId;   //!
+  TBranch        *b_recoPt_1;   //!
+  TBranch        *b_recoEta_1;   //!
+  TBranch        *b_recoPhi_1;   //!
+  TBranch        *b_recoNthJet_1;   //!
+  TBranch        *b_recoPt_2;   //!
+  TBranch        *b_recoEta_2;   //!
+  TBranch        *b_recoPhi_2;   //!
+  TBranch        *b_recoNthJet_2;   //!
+  TBranch        *b_recoDeltaEta;   //!
+  TBranch        *b_recoDeltaPhi;   //!
+  TBranch        *b_recoDeltaR;   //!
+  TBranch        *b_recoMass;   //!
+  TBranch        *b_l1Pt_1;   //!
+  TBranch        *b_l1Eta_1;   //!
+  TBranch        *b_l1Phi_1;
+  TBranch       *b_jetClusterPt;
+  TBranch        *b_jetClusterEta;
+  TBranch        *b_jetClusterPhi;//!
+  TBranch        *b_l1NthJet_1;   //!
+  TBranch        *b_l1NTau_1;   //!
+  TBranch        *b_l1Pt_2;   //!
+  TBranch        *b_l1Eta_2;   //!
+  TBranch        *b_l1Phi_2;   //!
+  TBranch        *b_l1NthJet_2;   //!
+  TBranch        *b_l1NTau_2;   //!
+  TBranch        *b_l1DeltaEta;   //!
+  TBranch        *b_l1DeltaPhi;   //!
+  TBranch        *b_l1DeltaR;   //!
+  TBranch        *b_l1Mass;   //!
+  TBranch        *b_l1Matched_1;   //!
+  TBranch        *b_l1Matched_2;   //!
+  TBranch        *b_nRecoJets;   //!
+  TBranch        *b_nL1Jets;   //!
+  TBranch        *b_vbfBDT;   //!
+  TBranch        *b_tau1;   //!
+  TBranch        *b_tau2;   //!
+  TBranch        *b_tau3;   //!
+  TBranch        *b_nSubJets;   //!
+  TBranch        *b_subJetHFlav;   //!
+  TBranch        *b_nBHadrons;   //!
+  TBranch        *b_nL1Taus;   //!
+  TBranch        *b_allRegions;   //!
+  TBranch        *b_hcalTPGs;   //!
+  TBranch        *b_ecalTPGs;   //!
+  TBranch        *b_caloClusters;   //!
+  TBranch        *b_l1Jets;   //!
+  TBranch        *b_ak8Jets;   //!
+  TBranch        *b_subJets;   //!
+  
    controlplot(const char* file1, const char* file2, const char* recoeta, const char* l1pt);
    virtual ~controlplot();
    virtual Int_t    Cut(Long64_t entry);
@@ -267,6 +267,9 @@ void controlplot::Init(TTree *tree)
    fChain->SetBranchAddress("l1Pt_1", &l1Pt_1, &b_l1Pt_1);
    fChain->SetBranchAddress("l1Eta_1", &l1Eta_1, &b_l1Eta_1);
    fChain->SetBranchAddress("l1Phi_1", &l1Phi_1, &b_l1Phi_1);
+   fChain->SetBranchAddress("jetClusterPt", &jetClusterPt, &b_jetClusterPt);
+   fChain->SetBranchAddress("jetClusterPhi", &jetClusterPhi, &b_jetClusterPhi);
+   fChain->SetBranchAddress("jetClusterEta", &jetClusterEta, &b_jetClusterEta);
    fChain->SetBranchAddress("l1NthJet_1", &l1NthJet_1, &b_l1NthJet_1);
    fChain->SetBranchAddress("l1NTau_1", &l1NTau_1, &b_l1NTau_1);
    fChain->SetBranchAddress("l1Pt_2", &l1Pt_2, &b_l1Pt_2);
