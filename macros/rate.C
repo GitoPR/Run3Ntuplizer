@@ -10,11 +10,13 @@ c1->SetLogy();
 c1->SetGrid();
 gStyle->SetOptStat(0);
 
-TFile *g0 =TFile::Open("out.root");
-TH1F *h0 = (TH1F*)g0->Get("l1jetpt_rate1");
-TH1F *h1 = (TH1F*)g0->Get("l1jetpt");
-
-TH1F* ratesHist0 = new TH1F("", "", nBins+2, xMin, xMax);
+TFile *g0 =TFile::Open("zerobias.root");
+TH1F *h0 = (TH1F*)g0->Get("l1NtupleProducer/mjetcluster_pt");
+TH1F *h1 = (TH1F*)g0->Get("l1NtupleProducer/nEvents");
+ 
+int nBins = h0->GetNbinsX()+2;
+ 
+TH1F* ratesHist0 = new TH1F("", "", nBins, h0->GetMinimum(), h0->GetMaximum());
 ratesHist0->Sumw2();
 int Sum0=0;
 
@@ -39,7 +41,7 @@ legend1->SetTextFont(42);
 legend1->SetLineColor(0);
 legend1->SetTextSize(0.04);
 legend1->SetFillColor(0);
-legend1->AddEntry(ratesHist0, "L1boosted", "l");
+legend1->AddEntry(ratesHist0, "cluster jet", "l");
 legend1->Draw();
 
 TLatex *t2a = new TLatex(0.5,0.9," #bf{CMS} #it{Preliminary}                     (13 TeV)");

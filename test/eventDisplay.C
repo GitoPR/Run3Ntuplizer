@@ -54,7 +54,7 @@ namespace {
 //phi values
     
 void plotEventDisplay2(long long int _kEntry) {
-  TFile* f = TFile::Open("../xl1TNtuple-ggHBB_10.root");
+  TFile* f = TFile::Open("../l1TNtuple-ggHBB_10.root");
   kEntry = _kEntry;
   auto makeHisto = [](ROOT::RVec<UShort_t> arr) {
     entry++;
@@ -148,7 +148,7 @@ void plotEventDisplay2() {
 	std::cout << "dau_et: " << dgt_et[i] << std::endl;
 	std::cout << "dau_id: " << dgt_id[i] << std::endl;  */ 
 	
-	TEllipse *circ = new TEllipse(dgt_eta[i],dgt_phi[i],.1 , .1);
+
 	circ ->SetFillStyle(1001);
 	circ-> SetFillColor(kOrange + 2);
 	circ -> SetLineColor(kOrange +2);

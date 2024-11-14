@@ -46,7 +46,7 @@ void controlplot::Loop(const char* recoeta, const char* l1pt)
 // METHOD2: replace line
 //    fChain->GetEntry(jentry);       //read all branches
 //by  b_branchname->GetEntry(ientry); //read only this branch
-   if (fChain == 0) return;
+  if (fChain == 0) return;
 
    Long64_t nentries = fChain->GetEntriesFast();
 
@@ -58,19 +58,24 @@ void controlplot::Loop(const char* recoeta, const char* l1pt)
    std::stringstream sstrm2(l1pt);
    double l1ptcut;
    sstrm2 >> l1ptcut;
+
    double SF = 1.0; // naive scale factor
    for (Long64_t jentry=0; jentry<nentries;jentry++) {
 	Long64_t ientry = LoadTree(jentry);
 	if (ientry < 0) break;
 	nb = fChain->GetEntry(jentry);   nbytes += nb;
 
+	std::cout << "jentry : "<<jentry << std::endl; 
+	//std::cout << jetClusterPt << std::endl;
+
 	//efficiencies
-	jetClusterPt = SF*jetClusterPt; 
+	  //for  (size_t i = 0 ; i < jetClusterPt.size(); i++) { 
+	jetClusterPt = SF* jetClusterPt; 
 	recoetacut = false;
 	if(recoetarange == "barrel") recoetacut = (abs(recoEta_1) <= 1.474);
 	if(recoetarange == "endcap") recoetacut = (abs(recoEta_1) > 1.474 && abs(recoEta_1) <= 3);
 	if(recoetarange == "all") recoetacut = true;
-        if(recoPt_1 >= 200. && genId == 25 && genDR < 0.4) {
+        if(recoPt_1 >= 200. && genId == 25 && genDR < 0.8) {
 		recojetpt_eff_den1->Fill(recoPt_1); 
 		recojeteta_eff_den1->Fill(recoEta_1); 
 		recojetphi_eff_den1->Fill(recoPhi_1); 
@@ -78,19 +83,19 @@ void controlplot::Loop(const char* recoeta, const char* l1pt)
 			recojetpt_eff_num1->Fill(recoPt_1);  
 			recojeteta_eff_num1->Fill(recoEta_1); 
 			recojetphi_eff_num1->Fill(recoPhi_1); 
-		} 
+		}
 	}
-
+   }
 	//rates
-	l1jetpt->Fill(jetClusterPt*SF);
-	if(l1Jets->size() > 0) {
+	//	l1jetpt->Fill(jetClusterPt*SF);
+ 	/* if(l1Jets->size() > 0) {
 		double fillpt = -99;
 		for(size_t i = 0; i < l1Jets->size(); i++){
 			if(l1Jets->at(i).Pt() > fillpt) fillpt = l1Jets->at(i).Pt();
-		}
-		if(fillpt > -99) l1jetpt_rate1->Fill(fillpt*SF);
-	}	
-   }
+			} */
+	//fillpt = jetClusterPt; 
+	//if(fillpt > -99) l1jetpt_rate1->Fill(fillpt*SF);
+	//}	
 }
 
 void controlplot::BookHistos(const char* file2){

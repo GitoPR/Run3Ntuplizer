@@ -42,7 +42,7 @@ c1->Draw();
 c1->SetGrid();
 gStyle->SetOptStat(0);
 
-TFile *g1 =TFile::Open("out.root");
+TFile *g1 =TFile::Open("test_gghbb.root");
 TH1F *h1 = (TH1F*)g1->Get("recojetpt_eff_den1");
 TH1F *h2 = (TH1F*)g1->Get("recojetpt_eff_num1");
 

@@ -39,7 +39,6 @@
 
 #include "FWCore/Utilities/interface/InputTag.h"
 #include "FWCore/ServiceRegistry/interface/Service.h"
-
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 
 // GCT and RCT data formats
@@ -144,8 +143,8 @@ class jetInfo{
 public:
   int seedEnergy;
   int energy;
-  int phiMax;
-  int etaMax;
+  double phiMax;
+  double etaMax;
 
   jetInfo(){
     seedEnergy = 0;
@@ -276,7 +275,7 @@ class towerMax {
     return x;
   }
 
-    inline towerMax getTowerMax(GCTsupertower_t temp[nSTEta][nSTPhi]) {
+    inline towerMax getJetPosition(GCTsupertower_t temp[nSTEta][nSTPhi]) {
     etaStripPeak_t etaStripPeak;
 
     for (int i = 0; i < nSTEta; i++) {
@@ -335,7 +334,7 @@ jetInfo getJetValues(gctobj::GCTsupertower_t tempX[nSTEta][nSTPhi], int seed_eta
   for(loop j=0; j<nSTEta; j++){
     for(loop k=0; k<nSTPhi; k++){
       if(j== seed_eta1 && k == seed_phi1){
-	std::cout << "seed_eta1 : " << j  << "\t" << "seed_phi1 : " << k << std::endl;
+	//std::cout << "seed_eta1 : " << j  << "\t" << "seed_phi1 : " << k << std::endl;
         for(loop m=0; m<3 ; m++){
           tmp1 = temp[j+m][k] ;
           tmp2 = temp[j+m][k+1] ;
@@ -670,7 +669,7 @@ private:
   int genId, genMother, dauID;
   double recoPt_1, recoEta_1, recoPhi_1;
   double l1Pt_1, l1Eta_1, l1Phi_1;
-  double jetClusterPt, jetClusterEta, jetClusterPhi ;
+  std::vector<double> jetClusterPt, jetClusterEta, jetClusterPhi ;
   double seedPt_1, seedEta_1, seedPhi_1;
   std::vector<double> clusterCord; 
   
@@ -682,11 +681,14 @@ private:
   std::vector<uint16_t> cregions;
 
   // Daugther particles info
-   std::vector<int> dgt_id;
+  std::vector<int> dgt_id;
   std::vector<double>dgt_et;
   std::vector<double>dgt_eta;
   std::vector<double>dgt_phi;
 
+  //clustered jets vector
+  std::vector<jetInfo> all_mjets;
+  std::vector<jetInfo> reco_matched_mjets; 
     
   double recoPt_;
   std::vector<int> nSubJets, nBHadrons, HFlav;
@@ -707,6 +709,9 @@ private:
   TH1F* leadSingleJet;
   TH1F* EtSum_HT;
   TH1F* EtSum_ETMHF;
+  TH1F* mjetcluster_pt;
+  TH1F* mjetcluster_eta;
+  TH1F* mjetcluster_phi; 
   edm::Service<TFileService> tfs_;  
 
 };
@@ -734,6 +739,9 @@ BoostedJetStudies::BoostedJetStudies(const edm::ParameterSet& iConfig) :
   leadSingleJet= tfs_->make<TH1F>( "leadSingleJet", "leadSingleJet", 100, 0., 1100.);
   EtSum_HT     = tfs_->make<TH1F>( "EtSum_HT", "EtSum_HT", 100, 0., 1100.);
   EtSum_ETMHF  = tfs_->make<TH1F>( "EtSum_ETMHF", "EtSum_ETMHF", 100, 0., 1100.);
+  mjetcluster_pt     = tfs_->make<TH1F>( "mjetcluster_pt", "mjetcluster_pt", 100, 0., 1100.);
+  mjetcluster_eta = tfs_->make<TH1F>( "mjetcluster_eta", "mjetcluster_eta", 100, -5., 5.);
+  mjetcluster_phi    = tfs_->make<TH1F>( "mjetcluster_phi", "mjetcluster_phi", 100, -M_PI, M_PI);
 }
 
 BoostedJetStudies::~BoostedJetStudies() {
@@ -749,7 +757,7 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
 {
   using namespace edm;
 
-   nEvents->Fill(1);
+  nEvents->Fill(1);
   run = evt.id().run();
   lumi = evt.id().luminosityBlock();
   event = evt.id().event();
@@ -779,90 +787,13 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
   dgt_eta.clear();
   dgt_phi.clear();
   dgt_et.clear();
-  clusterCord.clear(); 
+  clusterCord.clear();
+  jetClusterEta.clear();
+  jetClusterPt.clear();
+  jetClusterPhi.clear(); 
   //  maxEta.clear();
   //maxPhi.clear(); 
 
-  gctobj::GCTsupertower_t temp[nSTEta][nSTPhi]; 
-  for (const auto& region : evt.get(regionsToken_)){
-
-    uint32_t ieta = region.id().ieta() - 4; // Subtract off the offset for HF
-    uint32_t iphi = region.id().iphi();
-    double  et = region.et();
-    //  std::cout << "et : " << et << std::endl;
-    
-    uint16_t regionSummary = region.raw();
-    
-    uint16_t rloc_eta  = ((0xFFFF & regionSummary) >> 14);
-    uint16_t rloc_phi = ((0x3FFF & regionSummary) >> 12); 
-    
-    int calo_index = 14*iphi + ieta; // if we need to we can make another index table to reduce the cost of resources of this operation.
-
-    calo_coor_t calo_coor_event = calo_coor[calo_index];
-    //    std::cout << "calo_coor_event.side : " << calo_coor_event.side << std::endl; 
-
-    int towerEta = calo_coor_event.ieta + rloc_eta;
-    int towerPhi = calo_coor_event.iphi + rloc_phi;
-      if (calo_coor_event.side > 0){ 
-	towerEta = -towerEta; 
-	
-      }
-
-      //    std::cout << "towerEta : " << towerEta << "\t" << "towerPhi : " << towerPhi << "\n" << std::endl;
-    
-    double eta =  getUCTTowerEta(towerEta);
-    double phi = getUCTTowerPhi(towerPhi); 
-      
-    regionColl_input[ieta][iphi] = et;  //regionSummary;
-
-    temp[ieta][iphi].ieta  = ieta;
-    temp[ieta][iphi].iphi = iphi;
-    temp[ieta][iphi].et = et;
-    temp[ieta][iphi].towerEta = towerEta;
-    temp[ieta][iphi].towerPhi = towerPhi;
-    temp[ieta][iphi].eta = eta;
-    temp[ieta][iphi].phi = phi; 
-  }
-
-  for (unsigned int phi = 0; phi < 18; phi++){
-    for (int eta = 0; eta < 14; eta++){
-      //      std::cout << "regionColl_input[eta][phi] : "<<regionColl_input[eta][phi] << std::endl; 
-      cregions.push_back(regionColl_input[eta][phi]);
-      
-    }
-  }
-  
-
-   // testing results
-    gctobj::towerMax maxTower  = gctobj::getTowerMax(temp);
-
-    jetInfo test_jet;
-
-    test_jet.seedEnergy = maxTower.energy;
-    test_jet.etaMax = maxTower.eta;
-    test_jet.phiMax = maxTower.phi;
-
-    //    std::cout << "maxTower.towerEta" << maxTower.towerEta<<"\t"  << "maxTower.towerPhi : " << maxTower.towerPhi << "\n" <<std::endl; 
-    /*   clusterCord.insert(clusterCord.end(), {maxTower.eta ,maxTower.phi});
-    jetClusterPt = test_jet.seedEnergy;
-    jetClusterEta = test_jet.etaMax;
-    jetClusterPhi = test_jet.phiMax; 
-
-
-
-     
-     
-    //    maxTower.seedEta*
-
-    jetInfo tmp_jet;
-    
-    
-    tmp_jet = getJetValues(temp,maxTower.ieta, maxTower.iphi);
-    test_jet.energy = tmp_jet.energy;*/ 
-
-    /*std::cout << "test_jet.energy : " << test_jet.energy << std::endl;
-    std::cout << "test_jet.phi : " << test_jet.phiMax << std::endl;
-    std::cout << "test_jet.eta : "<< test_jet.etaMax <<  "\n"<<std:: endl;*/
  
   edm::Handle<BXVector<l1t::Jet>> stage2Jets;
   if(!evt.getByToken(stage2JetToken_, stage2Jets)) cout<<"ERROR GETTING THE STAGE 2 JETS"<<std::endl;
@@ -1059,26 +990,111 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
     }
   }
 
-  // testing results
-  /*    gctobj::towerMax maxTower  = gctobj::getTowerMax(temp);
+  gctobj::GCTsupertower_t temp[nSTEta][nSTPhi]; 
+  for (const auto& region : evt.get(regionsToken_)){
 
-    jetInfo test_jet;
-
-    test_jet.seedEnergy = maxTower.energy;
-    test_jet.etaMax = maxTower.eta;
-    test_jet.phiMax = maxTower.phi;*/ 
-
-    //    std::cout << "maxTower.towerEta" << maxTower.towerEta<<"\t"  << "maxTower.towerPhi : " << maxTower.towerPhi << "\n" <<std::endl;
+    //Extract calorimeter 14*18 information grid from the event
     
-    clusterCord.insert(clusterCord.end(), {maxTower.eta ,maxTower.phi});
-    if (reco::deltaR(test_jet.etaMax , test_jet.phiMax , recoEta_1, recoPhi_1) < 0.4) {
-      jetClusterPt = test_jet.seedEnergy;
-      jetClusterEta = test_jet.etaMax;
-      jetClusterPhi = test_jet.phiMax;
-    }
-  if (abs(genEta_1) < 2.5) {
-    efficiencyTree->Fill();
+    uint32_t ieta = region.id().ieta() - 4; // Subtract off the offset for HF
+    uint32_t iphi = region.id().iphi();
+    double  et = region.et();
+    uint16_t regionSummary = region.raw();
+    
+    uint16_t rloc_eta  = ((0xFFFF & regionSummary) >> 14);
+    uint16_t rloc_phi = ((0x3FFF & regionSummary) >> 12); 
+
+    //Given the eta and phi from the event, find the corresponding value from 0 to 251. 
+    int calo_index = 14*iphi + ieta; 
+
+    calo_coor_t calo_coor_event = calo_coor[calo_index];
+
+    int towerEta = calo_coor_event.ieta + rloc_eta;
+    int towerPhi = calo_coor_event.iphi + rloc_phi;
+
+    //check the calo_coor lut .side value to determine sign of the towerEta. if 0 = positive ; 1 = positive 
+    if (calo_coor_event.side > 0){ 
+	towerEta = -towerEta; 
+	
+      }
+
+
+    
+    double eta =  getUCTTowerEta(towerEta);
+    double phi = getUCTTowerPhi(towerPhi); 
+      
+    regionColl_input[ieta][iphi] = et;  
+
+    //store in tmp the values of the event. 
+    temp[ieta][iphi].ieta  = ieta;
+    temp[ieta][iphi].iphi = iphi;
+    temp[ieta][iphi].et = et;
+    temp[ieta][iphi].towerEta = towerEta;
+    temp[ieta][iphi].towerPhi = towerPhi;
+    temp[ieta][iphi].eta = eta;
+    temp[ieta][iphi].phi = phi; 
   }
+  //Convert 14*18 calorimeter region et info into an 0 to 251 array. 
+  for (unsigned int phi = 0; phi < 18; phi++){
+    for (int eta = 0; eta < 14; eta++){
+      cregions.push_back(regionColl_input[eta][phi]);
+      
+    }
+  }
+  
+  
+
+
+
+
+
+
+      // number of iterations for the clustering algorithm 
+      int iter = 2; 
+      jetInfo mjets[iter];
+      
+      //iterate the jet clustering algorithm a given number of times. Push the results into jetCluster vectors  
+      for(int i =0;i < iter ; i++ ){
+	
+      gctobj::towerMax maxTower  = gctobj::getJetPosition(temp);
+      jetInfo tmp_jet;
+      clusterCord.insert(clusterCord.end(), {maxTower.eta ,maxTower.phi});
+      
+      mjets[i].seedEnergy = maxTower.energy;
+      mjets[i].etaMax = maxTower.eta;
+      mjets[i].phiMax = maxTower.phi;
+
+      
+      tmp_jet = getJetValues(temp,maxTower.ieta, maxTower.iphi);                                                                                                                                              
+      mjets[i].energy = tmp_jet.energy;
+      all_mjets.push_back(mjets[i]); 
+
+	
+      //match the l1 jet to the reco level jet. 
+      if (reco::deltaR(mjets[i].etaMax , mjets[i].phiMax , recoEta_1, recoPhi_1) < 0.4) {   
+	//an optional condition if you want to match reco jets to generated MC jets. 
+	if(genDR < 0.8) { 
+	
+	
+	jetClusterEta.push_back(mjets[i].etaMax);
+	jetClusterPhi.push_back(mjets[i].phiMax);
+	jetClusterPt.push_back(mjets[i].energy);
+	
+	mjetcluster_pt -> Fill(mjets[i].energy);
+	mjetcluster_phi->Fill(mjets[i].phiMax);
+	mjetcluster_eta->Fill(mjets[i].etaMax );
+	//std::cout << " mjet.energy : " <<  mjets[i].energy << std::endl;
+	//std::cout << " mjet.etaMax : " <<  mjets[i].etaMax << std::endl;
+	//std::cout << " mjet.phiMax : " <<  mjets[i].phiMax << std::endl;
+	
+        } // genDR end of parenthesis 
+      }// reco matching end of parenthesis 
+      }//end of mjet clustering iteration
+
+      
+      
+      if (abs(genEta_1) < 2.5) {
+	efficiencyTree->Fill();
+      }
 
   //  efficiencyTree->Fill();
   //  cout<< "check5"  << std::endl;
@@ -1090,8 +1106,7 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
     seedPt_1=-99; seedEta_1=-99; seedPhi_1=-99; seedNthJet_1=-99;
     recoPt_1=-99; recoEta_1=-99; recoPhi_1=-99; recoNthJet_1=-99;
     l1Pt_1=-99; l1Eta_1=-99; l1Phi_1=-99; l1NthJet_1=-99;
-    jetClusterPt = -99 ; jetClusterEta = -99;  jetClusterPhi = - 99; 
-    recoPt_=-99; dauID = -99;  dauET = -99; dau_phi =-99; dau_eta = -99; // maxEta = -99 ;maxPhi = -99; 
+    recoPt_=-99; dauID = -99;  dauET = -99; dau_phi =-99; dau_eta = -99;
   }
 
   void BoostedJetStudies::createBranches(TTree *tree){
@@ -1113,9 +1128,9 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
     tree->Branch("recoEta_1",     &recoEta_1,    "recoEta_1/D");
     tree->Branch("recoPhi_1",     &recoPhi_1,    "recoPhi_1/D");
     tree->Branch("recoNthJet_1",  &recoNthJet_1, "recoNthJet_1/I");
-    tree->Branch("jetClusterPt",  &jetClusterPt,       "jetClusterPt/D");
-    tree->Branch("jetClusterEta",  &jetClusterEta,       "jetClusterEta/D");
-    tree->Branch("jetClusterPhi",  &jetClusterPhi,       "jetClusterPhi/D");
+    tree->Branch("jetClusterPt",  &jetClusterPt);
+    tree->Branch("jetClusterEta",  &jetClusterEta);
+    tree->Branch("jetClusterPhi",  &jetClusterPhi);
     tree->Branch("l1Pt_1",        &l1Pt_1,       "l1Pt_1/D"); 
     tree->Branch("l1Eta_1",       &l1Eta_1,      "l1Eta_1/D");
     tree->Branch("l1Phi_1",       &l1Phi_1,      "l1Phi_1/D");
