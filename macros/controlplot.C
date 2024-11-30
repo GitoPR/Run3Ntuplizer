@@ -65,12 +65,11 @@ void controlplot::Loop(const char* recoeta, const char* l1pt)
 	if (ientry < 0) break;
 	nb = fChain->GetEntry(jentry);   nbytes += nb;
 
-	std::cout << "jentry : "<<jentry << std::endl; 
-	//std::cout << jetClusterPt << std::endl;
 
 	//efficiencies
-	  //for  (size_t i = 0 ; i < jetClusterPt.size(); i++) { 
-	jetClusterPt = SF* jetClusterPt; 
+
+
+	jetClusterPt = SF*  jetClusterPt; 
 	recoetacut = false;
 	if(recoetarange == "barrel") recoetacut = (abs(recoEta_1) <= 1.474);
 	if(recoetarange == "endcap") recoetacut = (abs(recoEta_1) > 1.474 && abs(recoEta_1) <= 3);
@@ -79,13 +78,13 @@ void controlplot::Loop(const char* recoeta, const char* l1pt)
 		recojetpt_eff_den1->Fill(recoPt_1); 
 		recojeteta_eff_den1->Fill(recoEta_1); 
 		recojetphi_eff_den1->Fill(recoPhi_1); 
-		if (jetClusterPt >= l1ptcut) {
+		if (jetClusterPt  >= l1ptcut) {
 			recojetpt_eff_num1->Fill(recoPt_1);  
 			recojeteta_eff_num1->Fill(recoEta_1); 
 			recojetphi_eff_num1->Fill(recoPhi_1); 
 		}
 	}
-   }
+	}
 	//rates
 	//	l1jetpt->Fill(jetClusterPt*SF);
  	/* if(l1Jets->size() > 0) {
@@ -95,7 +94,7 @@ void controlplot::Loop(const char* recoeta, const char* l1pt)
 			} */
 	//fillpt = jetClusterPt; 
 	//if(fillpt > -99) l1jetpt_rate1->Fill(fillpt*SF);
-	//}	
+	//}
 }
 
 void controlplot::BookHistos(const char* file2){
