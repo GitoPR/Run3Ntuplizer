@@ -5,6 +5,7 @@
 #include "TTree.h"
 #include "TFile.h"
 #include "TLorentzVector.h"
+#include "BoostedJetStudies.h"
 
 // user include files
 #include "FWCore/Framework/interface/Frameworkfwd.h"
@@ -650,6 +651,8 @@ private:
   //  virtual void beginRun(edm::Run const&, edm::EventSetup const&) override;
 
   // ----------member data ---------------------------
+  edm::EDGetTokenT<EcalTrigPrimDigiCollection> ecalSrc_;
+  edm::EDGetTokenT<HcalTrigPrimDigiCollection> hcalSrc_;
   edm::EDGetTokenT<vector<reco::CaloJet> > jetSrc_;
   edm::EDGetTokenT<vector<pat::Jet> > jetSrcAK8_;
   edm::EDGetTokenT<reco::GenParticleCollection> genSrc_;
@@ -663,13 +666,13 @@ private:
 
   TH1F* nEvents;
 
-  int run, lumi, event;
+  int run, lumi, event , numIterations;
 
   double genPt_1, genEta_1, genPhi_1, genM_1, genDR, dau_eta, dauET, dau_phi;
   int genId, genMother, dauID;
   double recoPt_1, recoEta_1, recoPhi_1;
   double l1Pt_1, l1Eta_1, l1Phi_1;
-  std::vector<double> jetClusterPt, jetClusterEta, jetClusterPhi ;
+  double  jetClusterPt, jetClusterEta, jetClusterPhi ;
   double seedPt_1, seedEta_1, seedPhi_1;
   std::vector<double> clusterCord; 
   
@@ -695,6 +698,8 @@ private:
   std::vector<std::vector<int>> subJetHFlav;
   std::vector<float> tau1, tau2, tau3;
 
+  std::vector<TLorentzVector> *ecalTPGs  = new std::vector<TLorentzVector>;
+  std::vector<TLorentzVector> *hcalTPGs  = new std::vector<TLorentzVector>;
   std::vector<TLorentzVector> *l1Jets  = new std::vector<TLorentzVector>;
   std::vector<TLorentzVector> *seed180  = new std::vector<TLorentzVector>;
   std::vector<TLorentzVector> *tauseed  = new std::vector<TLorentzVector>;
@@ -717,6 +722,8 @@ private:
 };
 
 BoostedJetStudies::BoostedJetStudies(const edm::ParameterSet& iConfig) :
+  ecalSrc_(consumes<EcalTrigPrimDigiCollection>( edm::InputTag("l1tCaloLayer1Digis"))),
+  hcalSrc_(consumes<HcalTrigPrimDigiCollection>( edm::InputTag("l1tCaloLayer1Digis"))),
   jetSrc_(    consumes<vector<reco::CaloJet> >(iConfig.getParameter<edm::InputTag>("recoJets"))),
   jetSrcAK8_( consumes<vector<pat::Jet> >(iConfig.getParameter<edm::InputTag>("recoJetsAK8"))),
   genSrc_( consumes<reco::GenParticleCollection> (iConfig.getParameter<edm::InputTag>( "genParticles"))),
@@ -770,7 +777,9 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
   
   uint16_t regionColl[252];
   uint16_t regionColl_input[14][18];
-  
+
+  ecalTPGs->clear();
+  hcalTPGs->clear();
   l1Jets->clear();
   seed180->clear();
   tauseed->clear();
@@ -788,13 +797,57 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
   dgt_phi.clear();
   dgt_et.clear();
   clusterCord.clear();
-  jetClusterEta.clear();
-  jetClusterPt.clear();
-  jetClusterPhi.clear(); 
-  //  maxEta.clear();
-  //maxPhi.clear(); 
+  all_mjets.clear();
 
- 
+
+
+  edm::Handle<EcalTrigPrimDigiCollection> ecalTPs;
+  evt.getByToken(ecalSrc_, ecalTPs);
+  for ( const auto& ecalTp : *ecalTPs ) {
+    int caloEta = ecalTp.id().ieta();
+    int caloPhi = ecalTp.id().iphi();
+    int et = ecalTp.compressedEt();
+    if(et != 0) {
+      float eta = getRecoEtaNew(caloEta);
+      float phi = getRecoPhiNew(caloPhi);
+      TLorentzVector temp;
+      temp.SetPtEtaPhiE(et,eta,phi,et);
+      ecalTPGs->push_back(temp);
+    }
+  }
+
+  edm::Handle<HcalTrigPrimDigiCollection> hcalTPs;
+  evt.getByToken(hcalSrc_, hcalTPs);
+  for ( const auto& hcalTp : *hcalTPs ) {
+    int caloEta = hcalTp.id().ieta();
+    uint32_t absCaloEta = abs(caloEta);
+    if(absCaloEta == 29) {
+      continue;
+    }
+    else if(hcalTp.id().version() == 0 && absCaloEta > 29) {
+      continue;
+    }
+    else if(absCaloEta <= 41) {
+      int caloPhi = hcalTp.id().iphi();
+      if(caloPhi <= 72) {
+        int et = hcalTp.SOI_compressedEt();
+        if(et != 0) {
+          float eta = getRecoEtaNew(caloEta);
+          float phi = getRecoPhiNew(caloPhi);
+          TLorentzVector temp;
+          temp.SetPtEtaPhiE(et,eta,phi,et);
+          hcalTPGs->push_back(temp);
+        }
+      }
+      else {
+        std::cerr << "Illegal Tower: caloEta = " << caloEta << "; caloPhi =" << caloPhi << std::endl;
+      }
+    }
+    else {
+      std::cerr << "Illegal Tower: caloEta = " << caloEta << std::endl;
+    }
+  }
+  
   edm::Handle<BXVector<l1t::Jet>> stage2Jets;
   if(!evt.getByToken(stage2JetToken_, stage2Jets)) cout<<"ERROR GETTING THE STAGE 2 JETS"<<std::endl;
   evt.getByToken(stage2JetToken_, stage2Jets);
@@ -1042,15 +1095,10 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
   }
   
   
-
-
-
-
-
-
       // number of iterations for the clustering algorithm 
-      int iter = 2; 
-      jetInfo mjets[iter];
+      int iter = 2;
+      numIterations = iter; 
+      jetInfo mjets;
       
       //iterate the jet clustering algorithm a given number of times. Push the results into jetCluster vectors  
       for(int i =0;i < iter ; i++ ){
@@ -1059,34 +1107,35 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
       jetInfo tmp_jet;
       clusterCord.insert(clusterCord.end(), {maxTower.eta ,maxTower.phi});
       
-      mjets[i].seedEnergy = maxTower.energy;
-      mjets[i].etaMax = maxTower.eta;
-      mjets[i].phiMax = maxTower.phi;
+      mjets.seedEnergy = maxTower.energy;
+      mjets.etaMax = maxTower.eta;
+      mjets.phiMax = maxTower.phi;
 
       
       tmp_jet = getJetValues(temp,maxTower.ieta, maxTower.iphi);                                                                                                                                              
-      mjets[i].energy = tmp_jet.energy;
-      all_mjets.push_back(mjets[i]); 
+      mjets.energy = tmp_jet.energy;
+      all_mjets.push_back(mjets); 
 
 	
       //match the l1 jet to the reco level jet. 
-      if (reco::deltaR(mjets[i].etaMax , mjets[i].phiMax , recoEta_1, recoPhi_1) < 0.4) {   
+      if (reco::deltaR(mjets.etaMax , mjets.phiMax , recoEta_1, recoPhi_1) < 0.4) {   
 	//an optional condition if you want to match reco jets to generated MC jets. 
-	if(genDR < 0.8) { 
+	///	if(genDR < 0.8) { 
 	
 	
-	jetClusterEta.push_back(mjets[i].etaMax);
-	jetClusterPhi.push_back(mjets[i].phiMax);
-	jetClusterPt.push_back(mjets[i].energy);
+	jetClusterEta = mjets.etaMax ;
+	jetClusterPhi = mjets.phiMax; 
+	jetClusterPt= mjets.energy;
 	
-	mjetcluster_pt -> Fill(mjets[i].energy);
-	mjetcluster_phi->Fill(mjets[i].phiMax);
-	mjetcluster_eta->Fill(mjets[i].etaMax );
-	//std::cout << " mjet.energy : " <<  mjets[i].energy << std::endl;
-	//std::cout << " mjet.etaMax : " <<  mjets[i].etaMax << std::endl;
-	//std::cout << " mjet.phiMax : " <<  mjets[i].phiMax << std::endl;
 	
-        } // genDR end of parenthesis 
+	mjetcluster_pt -> Fill(mjets.energy);
+	mjetcluster_phi->Fill(mjets.phiMax);
+	mjetcluster_eta->Fill(mjets.etaMax );
+	//std::cout << " mjet.energy : " <<  mjets.energy << std::endl;
+	//std::cout << " mjet.etaMax : " <<  mjets.etaMax << std::endl;
+	//std::cout << " mjet.phiMax : " <<  mjets.phiMax << std::endl;
+	
+	//        }  genDR end of parenthesis 
       }// reco matching end of parenthesis 
       }//end of mjet clustering iteration
 
@@ -1107,12 +1156,14 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
     recoPt_1=-99; recoEta_1=-99; recoPhi_1=-99; recoNthJet_1=-99;
     l1Pt_1=-99; l1Eta_1=-99; l1Phi_1=-99; l1NthJet_1=-99;
     recoPt_=-99; dauID = -99;  dauET = -99; dau_phi =-99; dau_eta = -99;
+    jetClusterPt = -99; jetClusterEta = -99; jetClusterPhi = -99;
   }
 
   void BoostedJetStudies::createBranches(TTree *tree){
     tree->Branch("run",     &run,     "run/I");
     tree->Branch("lumi",    &lumi,    "lumi/I");
     tree->Branch("event",   &event,   "event/I");
+    tree->Branch("numIterations" , &numIterations , "numIterations/I");
     tree->Branch("genPt_1",       &genPt_1,     "genPt_1/D");
     tree->Branch("genEta_1",      &genEta_1,    "genEta_1/D");
     tree->Branch("genPhi_1",      &genPhi_1,    "genPhi_1/D");
@@ -1128,9 +1179,9 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
     tree->Branch("recoEta_1",     &recoEta_1,    "recoEta_1/D");
     tree->Branch("recoPhi_1",     &recoPhi_1,    "recoPhi_1/D");
     tree->Branch("recoNthJet_1",  &recoNthJet_1, "recoNthJet_1/I");
-    tree->Branch("jetClusterPt",  &jetClusterPt);
-    tree->Branch("jetClusterEta",  &jetClusterEta);
-    tree->Branch("jetClusterPhi",  &jetClusterPhi);
+    tree->Branch("jetClusterPt",  &jetClusterPt , "jetClusterPt/D");
+    tree->Branch("jetClusterEta",  &jetClusterEta , "jetClusterEta/D");
+    tree->Branch("jetClusterPhi",  &jetClusterPhi , "jetClusterPhi/D");
     tree->Branch("l1Pt_1",        &l1Pt_1,       "l1Pt_1/D"); 
     tree->Branch("l1Eta_1",       &l1Eta_1,      "l1Eta_1/D");
     tree->Branch("l1Phi_1",       &l1Phi_1,      "l1Phi_1/D");
@@ -1141,6 +1192,8 @@ void BoostedJetStudies::analyze( const edm::Event& evt, const edm::EventSetup& e
     tree->Branch("nSubJets",      &nSubJets);
     tree->Branch("subJetHFlav",   &subJetHFlav);
     tree->Branch("nBHadrons",     &nBHadrons);
+    tree->Branch("ecalTPGs", "vector<TLorentzVector>", &ecalTPGs, 32000, 0);
+    tree->Branch("hcalTPGs", "vector<TLorentzVector>", &hcalTPGs, 32000, 0);
     tree->Branch("l1Jets", "vector<TLorentzVector>", &l1Jets, 32000, 0);
     tree->Branch("seed180", "vector<TLorentzVector>", &seed180, 32000, 0);
     tree->Branch("tauseed", "vector<TLorentzVector>", &tauseed, 32000, 0);
